@@ -3,3 +3,4 @@ python-dotenv
 werkzeug
 pdfplumber
 python-docx
+gunicorn
