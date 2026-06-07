@@ -4,266 +4,364 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>BAU – Login</title>
-
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 
+:root{
+  --navy:#073A78;
+  --navy-deep:#041f47;
+  --navy-mid:#1565C0;
+  --sky:#42A5F5;
+  --sky-light:#90CAF9;
+}
+
 body{
-  font-family:'Segoe UI',system-ui,sans-serif;
-  background:#073A78;
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
   min-height:100vh;
   display:flex;
-  flex-direction:column;
-  align-items:center;
-  padding:0;
-  margin:0;
+  background:#041f47;
+  overflow:hidden;
 }
 
-.screen{
+/* ── Animated background ── */
+.bg-canvas{
+  position:fixed;
+  inset:0;
+  z-index:0;
+  background:linear-gradient(135deg,#041f47 0%,#073A78 50%,#0d4fa0 100%);
+  overflow:hidden;
+}
+.bg-canvas::before,.bg-canvas::after{
+  content:'';
+  position:absolute;
+  border-radius:50%;
+  filter:blur(80px);
+  animation:drift 12s ease-in-out infinite alternate;
+}
+.bg-canvas::before{
+  width:600px;height:600px;
+  background:radial-gradient(circle,rgba(66,165,245,.18) 0%,transparent 70%);
+  top:-150px;left:-100px;
+}
+.bg-canvas::after{
+  width:500px;height:500px;
+  background:radial-gradient(circle,rgba(21,101,192,.25) 0%,transparent 70%);
+  bottom:-100px;right:-100px;
+  animation-delay:-6s;
+}
+@keyframes drift{
+  from{transform:translate(0,0) scale(1);}
+  to{transform:translate(40px,30px) scale(1.08);}
+}
+
+/* ── Grid dots overlay ── */
+.bg-dots{
+  position:fixed;
+  inset:0;
+  z-index:0;
+  background-image:radial-gradient(circle,rgba(144,202,249,.12) 1px,transparent 1px);
+  background-size:36px 36px;
+}
+
+/* ── Layout ── */
+.page{
+  position:relative;
+  z-index:1;
   width:100%;
   min-height:100vh;
   display:flex;
-  flex-direction:column;
   align-items:center;
-  justify-content:flex-start;
-  gap:34px;
-}
-.platform-widget{
-  background:#1D70B8;
-  color:#8ED4FF;
-  font-size:16px;
-  font-weight:500;
-  padding:18px 42px;
-  border-radius:0 0 22px 22px;
-  box-shadow:0 12px 28px rgba(0,0,0,.18);
-  text-align:center;
-  min-width:280px;
-  margin-top:0;
-}
-
-.login-wrapper{
-  width:100%;
-  max-width:470px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  flex:1;
   justify-content:center;
+  padding:24px 16px;
 }
+
+/* ── Card ── */
+.card{
+  width:100%;
+  max-width:420px;
+  background:rgba(255,255,255,.06);
+  backdrop-filter:blur(24px);
+  -webkit-backdrop-filter:blur(24px);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:24px;
+  padding:40px 42px 44px;
+  box-shadow:0 32px 80px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.04) inset;
+  animation:slideUp .55s cubic-bezier(.16,1,.3,1) both;
+}
+@keyframes slideUp{
+  from{opacity:0;transform:translateY(28px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+/* ── Logo area ── */
+.logo-area{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  margin-bottom:28px;
+}
+.bau-logo{
+  width:120px;
+  height:auto;
+  display:block;
+  margin-bottom:14px;
+  filter:drop-shadow(0 4px 16px rgba(66,165,245,.35));
+}
+.badge{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  background:rgba(66,165,245,.15);
+  border:1px solid rgba(66,165,245,.3);
+  border-radius:20px;
+  padding:5px 14px;
+  font-size:11px;
+  font-weight:700;
+  color:var(--sky-light);
+  letter-spacing:.5px;
+  text-transform:uppercase;
+}
+.badge-dot{
+  width:6px;height:6px;
+  border-radius:50%;
+  background:var(--sky);
+  box-shadow:0 0 6px var(--sky);
+  animation:pulse 2s ease-in-out infinite;
+}
+@keyframes pulse{
+  0%,100%{opacity:1;transform:scale(1);}
+  50%{opacity:.5;transform:scale(.8);}
+}
+
+/* ── Role tabs ── */
 .tabs{
   display:flex;
-  width:320px;
-  height:48px;
-  margin-bottom:-1px;
-  z-index:2;
+  background:rgba(0,0,0,.25);
+  border-radius:14px;
+  padding:4px;
+  margin-bottom:28px;
+  border:1px solid rgba(255,255,255,.08);
 }
-
 .tab-btn{
   flex:1;
   border:none;
+  background:transparent;
   font-family:inherit;
-  font-size:16px;
-  font-weight:600;
+  font-size:13px;
+  font-weight:700;
   cursor:pointer;
-  color:#fff;
-  background:#1565C0;
-  transition:.2s;
+  color:rgba(255,255,255,.5);
+  padding:10px 8px;
+  border-radius:10px;
+  transition:all .25s cubic-bezier(.4,0,.2,1);
+  letter-spacing:.3px;
+  position:relative;
 }
-
-.tab-btn.student{
-  border-radius:22px 0 0 0;
-}
-
-.tab-btn.instructor{
-  border-radius:0 22px 0 0;
-}
-
 .tab-btn.active{
-  background:#78C8F4;
+  background:rgba(21,101,192,.8);
   color:#fff;
+  box-shadow:0 4px 14px rgba(21,101,192,.5);
+}
+.tab-btn:not(.active):hover{
+  color:rgba(255,255,255,.75);
+  background:rgba(255,255,255,.06);
 }
 
-.login-card{
-  width:100%;
-  max-width:440px;
-  background:linear-gradient(180deg,#74C9F6 0%,#317AD9 48%,#06265E 100%);
-  border-radius:22px;
-  padding:24px 70px 38px;
-  box-shadow:0 18px 38px rgba(0,0,0,.32);
+/* ── Section heading ── */
+.section-title{
   text-align:center;
-}
-
-.logo-area{
-  margin-bottom:10px;
-}
-
-.bau-logo{
-  width:145px;
-  height:auto;
-  display:block;
-  margin:0 auto 8px;
-}
-
-.login-label{
+  font-size:22px;
+  font-weight:800;
   color:#fff;
-  font-size:15px;
-  font-weight:500;
-  margin-bottom:12px;
+  letter-spacing:-.3px;
+  margin-bottom:6px;
+}
+.section-sub{
+  text-align:center;
+  font-size:13px;
+  color:rgba(144,202,249,.7);
+  margin-bottom:26px;
 }
 
+/* ── Fields ── */
 .field{
+  position:relative;
   margin-bottom:14px;
 }
-
+.field-icon{
+  position:absolute;
+  left:14px;
+  top:50%;
+  transform:translateY(-50%);
+  font-size:15px;
+  pointer-events:none;
+  opacity:.5;
+}
 .field input{
   width:100%;
-  height:36px;
-  border:none;
-  border-radius:20px;
-  background:#F7F7F7;
-  padding:0 18px;
+  height:46px;
+  border:1.5px solid rgba(255,255,255,.12);
+  border-radius:12px;
+  background:rgba(255,255,255,.07);
+  padding:0 16px 0 42px;
   font-size:14px;
   font-family:inherit;
   outline:none;
-  color:#0B2A6B;
+  color:#fff;
+  transition:border-color .2s,background .2s,box-shadow .2s;
 }
-
 .field input::placeholder{
-  color:#B4B4B4;
+  color:rgba(255,255,255,.35);
+}
+.field input:focus{
+  border-color:rgba(66,165,245,.6);
+  background:rgba(255,255,255,.10);
+  box-shadow:0 0 0 3px rgba(66,165,245,.12);
 }
 
+/* ── Submit button ── */
 .btn-login{
   width:100%;
-  height:36px;
+  height:48px;
   border:none;
-  border-radius:20px;
-  background:#fff;
-  color:#0B2A6B;
+  border-radius:12px;
+  background:linear-gradient(135deg,#1565C0 0%,#1976D2 50%,#42A5F5 100%);
+  color:#fff;
   font-size:14px;
   font-weight:800;
   cursor:pointer;
-  margin-top:4px;
+  margin-top:8px;
   font-family:inherit;
+  letter-spacing:.5px;
+  text-transform:uppercase;
+  box-shadow:0 6px 20px rgba(21,101,192,.5);
+  transition:transform .18s,box-shadow .18s,opacity .18s;
+  position:relative;
+  overflow:hidden;
 }
-
+.btn-login::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.15) 0%,transparent 60%);
+  border-radius:12px;
+}
 .btn-login:hover{
-  background:#EAF4FB;
+  transform:translateY(-2px);
+  box-shadow:0 10px 28px rgba(21,101,192,.6);
+}
+.btn-login:active{
+  transform:translateY(0);
+  box-shadow:0 4px 12px rgba(21,101,192,.4);
 }
 
+/* ── Error ── */
 .error{
-  background:rgba(255,255,255,.18);
-  color:#fff;
-  border-radius:8px;
-  padding:9px 12px;
+  background:rgba(198,40,40,.2);
+  border:1px solid rgba(198,40,40,.4);
+  color:#FFCDD2;
+  border-radius:10px;
+  padding:10px 14px;
   font-size:12px;
   font-weight:600;
-  margin-top:12px;
+  margin-top:14px;
+  text-align:center;
+  animation:shake .4s ease;
+}
+@keyframes shake{
+  0%,100%{transform:translateX(0);}
+  25%{transform:translateX(-6px);}
+  75%{transform:translateX(6px);}
 }
 
-.hint{
+/* ── Footer ── */
+.card-footer{
+  margin-top:22px;
   text-align:center;
   font-size:11px;
-  color:rgba(255,255,255,.65);
-  margin-top:16px;
+  color:rgba(255,255,255,.3);
+  line-height:1.6;
 }
 
-@media(max-width:520px){
-  body{
-    padding:16px;
-  }
-
-  .screen{
-    gap:28px;
-  }
-
-  .platform-widget{
-    width:80%;
-    min-width:0;
-    padding:15px 20px;
-    font-size:14px;
-    border-radius:0 0 20px 20px;
-  }
-
-  .tabs{
-    width:72%;
-    height:46px;
-  }
-
-  .tab-btn{
-    font-size:14px;
-  }
-
-  .login-card{
-    padding:24px 38px 34px;
-  }
-
-  .bau-logo{
-    width:125px;
-  }
+/* ── Responsive ── */
+@media(max-width:480px){
+  .card{padding:32px 26px 36px;}
+  .section-title{font-size:19px;}
 }
 </style>
 </head>
-
 <body>
 
-<div class="screen">
+<div class="bg-canvas"></div>
+<div class="bg-dots"></div>
 
-  <div class="platform-widget">
-    Course Syllabus Platform
-  </div>
+<div class="page">
+  <div class="card">
 
-  <div class="login-wrapper">
-
-    <div class="tabs">
-      <button class="tab-btn student active" id="tab-student" onclick="selectRole('student')">Student</button>
-      <button class="tab-btn instructor" id="tab-instructor" onclick="selectRole('instructor')">Instructor</button>
+    <div class="logo-area">
+      <img src="{{ url_for('static', filename='bau_logo.png') }}"
+           alt="Bahçeşehir University"
+           class="bau-logo">
+      <span class="badge">
+        <span class="badge-dot"></span>
+        Course Syllabus Platform
+      </span>
     </div>
 
-    <div class="login-card">
-      <div class="logo-area">
-        <img src="{{ url_for('static', filename='bau_logo.png') }}"
-             alt="Bahçeşehir University Logo"
-             class="bau-logo">
+    <div class="tabs" role="tablist">
+      <button class="tab-btn active" id="tab-student"
+              role="tab" aria-selected="true"
+              onclick="selectRole('student')">Student</button>
+      <button class="tab-btn" id="tab-instructor"
+              role="tab" aria-selected="false"
+              onclick="selectRole('instructor')">Instructor</button>
+    </div>
+
+    <p class="section-title">Welcome back</p>
+    <p class="section-sub">Sign in to access your courses</p>
+
+    <form method="POST" autocomplete="on">
+      <input type="hidden" id="role-input" name="selected_role" value="student">
+
+      <div class="field">
+        <span class="field-icon">👤</span>
+        <input type="text" name="username" placeholder="Username" required autofocus autocomplete="username">
       </div>
 
-      <p class="login-label">Login</p>
+      <div class="field">
+        <span class="field-icon">🔒</span>
+        <input type="password" name="password" placeholder="Password" required autocomplete="current-password">
+      </div>
 
-      <form method="POST">
-        <input type="hidden" id="role-input" name="selected_role" value="student">
+      <button type="submit" class="btn-login">Sign In →</button>
+    </form>
 
-        <div class="field">
-          <input type="text" name="username" placeholder="Username" required autofocus>
-        </div>
+    {% if error %}
+      <div class="error" role="alert">{{ error }}</div>
+    {% endif %}
 
-        <div class="field">
-          <input type="password" name="password" placeholder="Password" required>
-        </div>
-
-        <button type="submit" class="btn-login">LOGIN</button>
-      </form>
-
-      {% if error %}
-        <div class="error">{{ error }}</div>
-      {% endif %}
+    <div class="card-footer">
+      Bahçeşehir University &nbsp;·&nbsp; AI-Powered Syllabus System
     </div>
 
   </div>
-
 </div>
 
 <script>
 function selectRole(role) {
   document.getElementById('role-input').value = role;
-
-  const studentTab = document.getElementById('tab-student');
-  const instructorTab = document.getElementById('tab-instructor');
-
+  const student = document.getElementById('tab-student');
+  const instructor = document.getElementById('tab-instructor');
   if (role === 'student') {
-    studentTab.classList.add('active');
-    instructorTab.classList.remove('active');
+    student.classList.add('active');
+    student.setAttribute('aria-selected', 'true');
+    instructor.classList.remove('active');
+    instructor.setAttribute('aria-selected', 'false');
   } else {
-    instructorTab.classList.add('active');
-    studentTab.classList.remove('active');
+    instructor.classList.add('active');
+    instructor.setAttribute('aria-selected', 'true');
+    student.classList.remove('active');
+    student.setAttribute('aria-selected', 'false');
   }
 }
 </script>

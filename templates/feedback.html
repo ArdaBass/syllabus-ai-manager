@@ -2,100 +2,226 @@
 {% set active_page = 'feedback' %}
 {% block content %}
 <style>
-.star-rating{display:flex;flex-direction:row-reverse;gap:4px;justify-content:flex-start;}
+/* Average score card */
+.avg-card{
+  background:linear-gradient(120deg,#0d2460 0%,#1565C0 100%);
+  border-radius:16px;padding:20px 24px;margin-bottom:20px;
+  display:flex;align-items:center;gap:24px;
+  box-shadow:0 4px 18px rgba(11,42,107,.28);
+  position:relative;overflow:hidden;
+}
+.avg-card::before{
+  content:'';position:absolute;right:-20px;top:-20px;
+  width:130px;height:130px;border-radius:50%;
+  background:rgba(255,255,255,.05);pointer-events:none;
+}
+.avg-score-big{font-size:52px;font-weight:900;color:#fff;line-height:1;flex-shrink:0;}
+.avg-info{}
+.avg-stars{font-size:22px;color:#FFC107;letter-spacing:3px;margin-bottom:4px;}
+.avg-label{font-size:12px;color:rgba(144,202,249,.8);font-weight:600;}
+.avg-empty{
+  background:var(--sky-pale);border:1px solid var(--border);
+  border-radius:12px;padding:14px 18px;margin-bottom:18px;
+  font-size:13px;color:var(--subtext);
+}
+
+/* Course switcher */
+.fb-course-switcher{position:relative;display:inline-block;}
+.fb-course-btn{
+  background:rgba(255,255,255,.15);
+  border:1.5px solid rgba(255,255,255,.3);
+  color:#fff;border-radius:10px;padding:8px 14px;
+  font-size:12px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;gap:8px;white-space:nowrap;
+  font-family:inherit;transition:background .15s;
+}
+.fb-course-btn:hover{background:rgba(255,255,255,.25);}
+.fb-course-menu{
+  display:none;position:absolute;top:calc(100% + 6px);right:0;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;box-shadow:0 6px 20px var(--shadow-strong);
+  min-width:230px;z-index:50;overflow:hidden;
+}
+.fb-course-option{
+  display:block;padding:10px 16px;font-size:13px;
+  text-decoration:none;color:var(--text);
+  transition:background .12s;
+}
+.fb-course-option:hover{background:var(--sky-pale);}
+.fb-course-option.active{background:var(--sky-pale);color:var(--navy-mid);font-weight:700;}
+
+/* Feedback form */
+.fb-form-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:16px;padding:22px;margin-bottom:22px;
+  box-shadow:0 2px 12px var(--shadow);
+}
+.fb-form-title{
+  font-size:13px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.6px;color:var(--navy-mid);margin-bottom:16px;
+}
+.fb-form-card label{
+  display:block;font-size:10px;font-weight:800;
+  text-transform:uppercase;letter-spacing:.6px;
+  color:var(--subtext);margin-bottom:6px;margin-top:14px;
+}
+.fb-form-card label:first-of-type{margin-top:0;}
+.fb-form-card textarea{
+  width:100%;background:var(--input-bg);
+  border:1.5px solid var(--border);border-radius:10px;
+  padding:10px 14px;font-size:13px;font-family:inherit;
+  color:var(--text);resize:vertical;outline:none;
+  transition:border-color .2s,box-shadow .2s;
+}
+.fb-form-card textarea:focus{border-color:var(--navy-mid);box-shadow:0 0 0 3px rgba(21,101,192,.1);}
+.fb-submit{
+  display:inline-flex;align-items:center;gap:7px;
+  background:linear-gradient(135deg,var(--navy-mid),#1976D2);
+  color:#fff;border:none;border-radius:10px;
+  padding:10px 20px;font-size:13px;font-weight:700;
+  cursor:pointer;font-family:inherit;margin-top:14px;
+  box-shadow:0 3px 10px rgba(21,101,192,.3);
+  transition:transform .15s,box-shadow .15s;
+}
+.fb-submit:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(21,101,192,.4);}
+
+/* Star rating input */
+.star-rating{display:flex;flex-direction:row-reverse;gap:6px;justify-content:flex-start;margin-top:8px;}
 .star-rating input{display:none;}
-.star-rating label{font-size:22px;cursor:pointer;color:var(--border);}
-.star-rating input:checked ~ label,.star-rating label:hover,.star-rating label:hover ~ label{color:#FFC107;}
-.fb-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px var(--shadow);}
-.fb-meta{font-size:10px;color:var(--subtext);margin-top:6px;}
-.star-display{color:#FFC107;font-size:14px;}
-.avg-card{background:var(--navy-mid);color:#fff;border-radius:12px;padding:16px 20px;margin-bottom:18px;display:flex;align-items:center;gap:20px;}
-.avg-score{font-size:42px;font-weight:800;line-height:1;}
-.avg-stars{font-size:20px;color:#FFC107;letter-spacing:2px;}
-.avg-label{font-size:11px;opacity:.8;margin-top:4px;}
+.star-rating label{font-size:26px;cursor:pointer;color:var(--border);transition:color .15s,transform .15s;}
+.star-rating input:checked ~ label,
+.star-rating label:hover,
+.star-rating label:hover ~ label{color:#FFC107;transform:scale(1.1);}
+
+/* Section heading */
+.fb-section-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:14px;
+}
+.fb-section-label{
+  font-size:10px;font-weight:800;text-transform:uppercase;
+  letter-spacing:1px;color:var(--subtext);
+  display:flex;align-items:center;gap:8px;width:100%;
+}
+.fb-section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+.fb-count{
+  font-size:11px;font-weight:700;
+  background:var(--sky-pale);color:var(--navy-mid);
+  border-radius:20px;padding:2px 10px;white-space:nowrap;
+}
+
+/* Feedback card */
+.fb-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:16px 18px;margin-bottom:10px;
+  box-shadow:0 2px 8px var(--shadow);
+  transition:transform .12s;
+}
+.fb-card:hover{transform:translateX(2px);}
+.star-display{color:#FFC107;font-size:16px;letter-spacing:2px;margin-bottom:8px;}
+.fb-content{font-size:13px;color:var(--text);line-height:1.7;}
+.fb-meta{
+  display:flex;align-items:center;gap:8px;
+  font-size:10px;color:var(--subtext);margin-top:10px;
+}
+.fb-meta-dot{width:3px;height:3px;border-radius:50%;background:var(--border);}
 </style>
 
-<div class="page-hdr" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
-  <div>
-    <h2>💬 Ders Geri Bildirimi — {{ course.code }}</h2>
-    <p>{% if user.role == 'student' %}Görüşlerinizi paylaşın{% else %}Öğrenci görüşleri{% endif %}</p>
+<!-- Page header -->
+<div class="page-hdr">
+  <div class="page-hdr-left">
+    <h2>💬 Course Feedback — {{ course.code }}</h2>
+    <p>{% if user.role == 'student' %}Share your thoughts about this course{% else %}Student reviews and ratings{% endif %}</p>
   </div>
   {% if courses and courses|length > 1 %}
-  <div style="position:relative;">
-    <button onclick="toggleCourseMenu()" id="course-picker-btn"
-      style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.35);color:#fff;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap;"
-      aria-haspopup="true" aria-expanded="false">
-      📘 {{ course.code }} <span style="font-size:10px;opacity:.7;">▼</span>
-    </button>
-    <div id="course-menu"
-      style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 16px var(--shadow-strong);min-width:220px;z-index:50;overflow:hidden;">
-      {% for c in courses %}
-      <a href="/course/{{ c.id }}/feedback"
-        style="display:block;padding:10px 16px;font-size:13px;text-decoration:none;color:{% if c.id == course.id %}var(--navy-mid){% else %}var(--text){% endif %};font-weight:{% if c.id == course.id %}700{% else %}400{% endif %};background:{% if c.id == course.id %}var(--sky-pale){% else %}transparent{% endif %};">
-        {% if c.id == course.id %}✓ {% endif %}{{ c.code }} — {{ c.name }}
-      </a>
-      {% endfor %}
+  <div class="page-hdr-actions">
+    <div class="fb-course-switcher">
+      <button onclick="toggleCourseMenu()" id="course-picker-btn"
+              class="fb-course-btn" aria-haspopup="true" aria-expanded="false">
+        📘 {{ course.code }} <span style="font-size:10px;opacity:.7;">▼</span>
+      </button>
+      <div class="fb-course-menu" id="course-menu">
+        {% for c in courses %}
+        <a href="/course/{{ c.id }}/feedback"
+           class="fb-course-option {% if c.id == course.id %}active{% endif %}">
+          {% if c.id == course.id %}✓ {% endif %}{{ c.code }} — {{ c.name }}
+        </a>
+        {% endfor %}
+      </div>
     </div>
   </div>
   {% endif %}
 </div>
 
-<!-- Instructor: ortalama puan kartı -->
-{% if user.role == 'instructor' and avg_rating %}
-<div class="avg-card">
-  <div class="avg-score">{{ avg_rating }}</div>
-  <div>
-    <div class="avg-stars">
-      {% set full = avg_rating | int %}
-      {% set half = 1 if (avg_rating - full) >= 0.5 else 0 %}
-      {{ '★' * full }}{{ '½' if half else '' }}{{ '☆' * (5 - full - half) }}
+<!-- Instructor: average rating -->
+{% if user.role == 'instructor' %}
+  {% if avg_rating %}
+  <div class="avg-card">
+    <div class="avg-score-big">{{ avg_rating }}</div>
+    <div class="avg-info">
+      <div class="avg-stars">
+        {% set full = avg_rating | int %}
+        {% set half = 1 if (avg_rating - full) >= 0.5 else 0 %}
+        {{ '★' * full }}{{ '½' if half else '' }}{{ '☆' * (5 - full - half) }}
+      </div>
+      <div class="avg-label">{{ total_rated }} rating{{ 's' if total_rated != 1 else '' }} · Average score</div>
     </div>
-    <div class="avg-label">{{ total_rated }} değerlendirme · Ortalama puan</div>
   </div>
-</div>
-{% elif user.role == 'instructor' %}
-<div style="background:var(--sky-pale);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:18px;font-size:13px;color:var(--subtext);">
-  Henüz puanlama yapılmamış.
-</div>
+  {% else %}
+  <div class="avg-empty">No ratings submitted yet for this course.</div>
+  {% endif %}
 {% endif %}
 
-<!-- Student: geri bildirim formu -->
+<!-- Student: submit form -->
 {% if user.role == 'student' %}
-<div class="form-card">
+<div class="fb-form-card">
+  <div class="fb-form-title">📝 Leave Feedback</div>
   <form method="POST">
-    <label for="fb-content">Görüşünüz</label>
-    <textarea id="fb-content" name="content" rows="4" placeholder="Bu ders hakkında ne düşünüyorsunuz?" required aria-required="true"></textarea>
-    <label>Değerlendirme</label>
-    <div class="star-rating" role="radiogroup" aria-label="Ders puanı">
+    <label for="fb-content">Your thoughts</label>
+    <textarea id="fb-content" name="content" rows="4"
+              placeholder="What do you think about this course?"
+              required aria-required="true"></textarea>
+    <label>Rating</label>
+    <div class="star-rating" role="radiogroup" aria-label="Course rating">
       {% for i in [5,4,3,2,1] %}
-      <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}" aria-label="{{ i }} yıldız">
-      <label for="star{{ i }}" title="{{ i }} yıldız">★</label>
+      <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}" aria-label="{{ i }} star{{ 's' if i != 1 else '' }}">
+      <label for="star{{ i }}" title="{{ i }} star{{ 's' if i != 1 else '' }}">★</label>
       {% endfor %}
     </div>
-    <button type="submit" class="btn btn-primary" style="margin-top:12px;">💬 Gönder</button>
+    <button type="submit" class="fb-submit">💬 Submit Feedback</button>
   </form>
 </div>
 {% endif %}
 
-<!-- Feedback listesi -->
+<!-- Feedback list -->
 {% if feedbacks %}
-  <h3 style="font-size:12px;font-weight:800;letter-spacing:.6px;color:var(--navy-mid);margin-bottom:10px;">
-    {% if user.role == 'instructor' %}Tüm Geri Bildirimler ({{ feedbacks|length }}){% else %}Onaylı Görüşler{% endif %}
-  </h3>
-  {% for f in feedbacks %}
-  <div class="fb-card">
-    {% if f.rating %}
-    <div class="star-display" aria-label="{{ f.rating }} yıldız">{{ '★' * f.rating }}{{ '☆' * (5 - f.rating) }}</div>
-    {% endif %}
-    <div style="font-size:13px;color:var(--text);margin-top:4px;">{{ f.content }}</div>
-    <div class="fb-meta">
-      {% if user.role == 'instructor' %}{{ f.username }} · {% endif %}
-      {{ f.created_at[:16] if f.created_at else '' }}
-    </div>
+<div class="fb-section-hdr">
+  <div class="fb-section-label">
+    {% if user.role == 'instructor' %}All Feedback{% else %}Approved Reviews{% endif %} &nbsp;
   </div>
-  {% endfor %}
+  <span class="fb-count">{{ feedbacks|length }}</span>
+</div>
+
+{% for f in feedbacks %}
+<div class="fb-card">
+  {% if f.rating %}
+  <div class="star-display" aria-label="{{ f.rating }} star{{ 's' if f.rating != 1 else '' }}">
+    {{ '★' * f.rating }}{{ '☆' * (5 - f.rating) }}
+  </div>
+  {% endif %}
+  <div class="fb-content">{{ f.content }}</div>
+  <div class="fb-meta">
+    {% if user.role == 'instructor' %}
+      <span>{{ f.username }}</span>
+      <span class="fb-meta-dot"></span>
+    {% endif %}
+    <span>{{ f.created_at[:16] if f.created_at else '' }}</span>
+  </div>
+</div>
+{% endfor %}
+
 {% else %}
-  <div class="empty-state"><div class="big">💬</div>Henüz geri bildirim yok.</div>
+<div class="empty-state"><div class="big">💬</div>No feedback yet.</div>
 {% endif %}
 
 <script>
@@ -112,7 +238,7 @@ document.addEventListener('click', function(e) {
   const menu = document.getElementById('course-menu');
   if (menu && btn && !btn.contains(e.target) && !menu.contains(e.target)) {
     menu.style.display = 'none';
-    if(btn) btn.setAttribute('aria-expanded', 'false');
+    btn.setAttribute('aria-expanded', 'false');
   }
 });
 </script>

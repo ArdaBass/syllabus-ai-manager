@@ -2,91 +2,297 @@
 {% set active_page = 'deadlines' %}
 {% block content %}
 <style>
-.prog-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:16px;box-shadow:0 1px 4px var(--shadow);}
-.prog-top{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;}
-.prog-top .lbl{color:var(--subtext);text-transform:uppercase;letter-spacing:.5px;font-size:10px;}
-.prog-track{height:10px;background:var(--sky-pale);border-radius:8px;overflow:hidden;}
-.prog-fill{height:100%;background:linear-gradient(90deg,var(--sky),var(--navy-mid));border-radius:8px;transition:width .4s ease;}
-.check-btn{width:30px;height:30px;border-radius:8px;border:2px solid var(--border);background:var(--card);color:#fff;font-size:15px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
-.check-btn.checked{background:var(--green);border-color:var(--green);}
-.check-btn:hover{border-color:var(--navy-mid);}
-.deadline-card.done .deadline-title{text-decoration:line-through;color:var(--subtext);}
-.deadline-card.done .deadline-accent{background:var(--green);}
+/* Progress */
+.prog-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:16px 18px;margin-bottom:18px;
+  box-shadow:0 2px 10px var(--shadow);
+}
+.prog-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.prog-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:var(--subtext);}
+.prog-count{font-size:13px;font-weight:800;color:var(--text);}
+.prog-pct{font-size:12px;color:var(--navy-mid);font-weight:700;}
+.prog-track{height:8px;background:var(--sky-pale);border-radius:8px;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--sky),var(--navy-mid));border-radius:8px;transition:width .5s ease;}
+
+/* Add form */
+.add-form-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:16px;padding:22px;margin-bottom:20px;
+  box-shadow:0 2px 12px var(--shadow);
+}
+.add-form-title{
+  font-size:13px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.6px;color:var(--navy-mid);
+  margin-bottom:16px;display:flex;align-items:center;gap:8px;
+}
+.add-form-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;}
+.add-form-group{display:flex;flex-direction:column;gap:6px;}
+.add-form-group label{
+  font-size:10px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.6px;color:var(--subtext);
+}
+.add-form-group input{
+  background:var(--input-bg);border:1.5px solid var(--border);
+  border-radius:10px;padding:10px 14px;
+  font-size:13px;font-family:inherit;color:var(--text);outline:none;
+  transition:border-color .2s,box-shadow .2s;
+}
+.add-form-group input:focus{
+  border-color:var(--navy-mid);
+  box-shadow:0 0 0 3px rgba(21,101,192,.1);
+}
+.add-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.btn-add-dl{
+  display:inline-flex;align-items:center;gap:7px;
+  background:linear-gradient(135deg,var(--navy-mid),#1976D2);
+  color:#fff;border:none;border-radius:10px;
+  padding:10px 18px;font-size:13px;font-weight:700;
+  cursor:pointer;font-family:inherit;white-space:nowrap;
+  box-shadow:0 3px 10px rgba(21,101,192,.3);
+  transition:transform .15s,box-shadow .15s;
+}
+.btn-add-dl:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(21,101,192,.4);}
+
+/* AI extract box */
+.ai-extract-card{
+  background:linear-gradient(120deg,rgba(66,165,245,.07) 0%,var(--sky-pale) 100%);
+  border:1.5px solid rgba(66,165,245,.2);
+  border-radius:14px;padding:18px;margin-bottom:20px;
+}
+.ai-extract-hdr{
+  display:flex;align-items:center;gap:8px;
+  font-size:12px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.6px;color:var(--navy-mid);margin-bottom:8px;
+}
+.ai-extract-sub{font-size:12px;color:var(--subtext);margin-bottom:12px;line-height:1.5;}
+.ai-extract-card textarea{
+  width:100%;background:var(--input-bg);
+  border:1.5px solid var(--border);border-radius:10px;
+  padding:10px 14px;font-size:13px;font-family:inherit;
+  color:var(--text);resize:vertical;outline:none;
+  transition:border-color .2s;
+}
+.ai-extract-card textarea:focus{border-color:var(--navy-mid);}
+.btn-extract{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--navy-mid);color:#fff;
+  border:none;border-radius:10px;padding:9px 16px;
+  font-size:12px;font-weight:700;cursor:pointer;
+  font-family:inherit;margin-top:10px;
+  transition:background .15s;
+}
+.btn-extract:hover{background:var(--navy);}
+#extract-result{margin-top:12px;}
+.extract-found-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--navy-mid);margin-bottom:8px;}
+.extract-btn{
+  display:flex;align-items:center;gap:8px;
+  text-align:left;background:var(--card);
+  border:1.5px solid var(--border);border-radius:10px;
+  padding:10px 14px;font-size:13px;cursor:pointer;
+  font-family:inherit;color:var(--text);
+  transition:border-color .15s,background .15s;
+  width:100%;margin-bottom:6px;
+}
+.extract-btn:hover{border-color:var(--navy-mid);background:var(--sky-pale);}
+
+/* Deadline cards */
+.dl-list{display:flex;flex-direction:column;gap:8px;}
+.dl-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;overflow:hidden;
+  display:flex;align-items:stretch;
+  box-shadow:0 2px 8px var(--shadow);
+  transition:transform .15s,box-shadow .15s;
+}
+.dl-card:hover{transform:translateX(2px);box-shadow:0 4px 16px var(--shadow-strong);}
+.dl-card.done{opacity:.7;}
+.dl-card.done .dl-title{text-decoration:line-through;color:var(--subtext);}
+
+.dl-urgency{
+  width:5px;flex-shrink:0;
+  transition:background .3s;
+}
+.dl-urgency.soon{background:#E53935;}
+.dl-urgency.near{background:#F57C00;}
+.dl-urgency.far{background:var(--sky);}
+.dl-urgency.done-bar{background:var(--green);}
+
+.dl-body{flex:1;padding:12px 16px;min-width:0;}
+.dl-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:5px;}
+.dl-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.dl-date{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:11px;color:var(--subtext);font-weight:600;
+}
+.dl-days-badge{
+  font-size:10px;font-weight:800;
+  border-radius:8px;padding:2px 8px;
+}
+.dl-days-badge.soon{background:#FFEBEE;color:#C62828;}
+.dl-days-badge.near{background:#FFF3E0;color:#E65100;}
+.dl-days-badge.far{background:var(--sky-pale);color:var(--navy-mid);}
+.dl-days-badge.done-badge{background:#E8F5E9;color:#2E7D32;}
+
+.dl-actions{display:flex;align-items:center;padding:0 14px;gap:8px;}
+
+/* Check button */
+.check-btn{
+  width:34px;height:34px;border-radius:10px;
+  border:2px solid var(--border);background:var(--card);
+  color:transparent;font-size:16px;font-weight:800;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .18s;
+}
+.check-btn:hover{border-color:var(--green);color:var(--green);}
+.check-btn.checked{background:var(--green);border-color:var(--green);color:#fff;}
+
+/* Delete button */
+.btn-del{
+  width:32px;height:32px;border-radius:8px;
+  background:transparent;border:1.5px solid var(--border);
+  color:var(--subtext);font-size:14px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s,border-color .15s,color .15s;
+}
+.btn-del:hover{background:#FFEBEE;border-color:#EF9A9A;color:#C62828;}
+
+/* Calendar export */
+.cal-export-row{display:flex;justify-content:flex-end;margin-bottom:14px;}
+.btn-cal{
+  display:inline-flex;align-items:center;gap:6px;
+  background:#E8F5E9;color:#2E7D32;
+  border:1.5px solid #A5D6A7;border-radius:10px;
+  padding:8px 14px;font-size:12px;font-weight:700;
+  text-decoration:none;
+  transition:background .15s,transform .15s;
+}
+.btn-cal:hover{background:#C8E6C9;transform:translateY(-1px);}
+
+/* Section heading */
+.dl-section-hdr{
+  font-size:10px;font-weight:800;text-transform:uppercase;
+  letter-spacing:1px;color:var(--subtext);
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:14px;
+}
+.dl-section-hdr::after{content:'';flex:1;height:1px;background:var(--border);}
+
+@media(max-width:600px){
+  .add-form-grid{grid-template-columns:1fr;}
+  .add-form-row{grid-template-columns:1fr;}
+}
 </style>
 
 <div class="page-hdr">
-  <h2>
-    {% if filter_type == 'exams' %}
-      Exam Schedule
-    {% elif user.role == 'instructor' %}
-      Update Deadlines
-    {% else %}
-      Upcoming Deadlines
-    {% endif %}
-  </h2>
+  <div class="page-hdr-left">
+    <h2>
+      {% if filter_type == 'exams' %}📝 Exam Schedule
+      {% elif user.role == 'instructor' %}📅 Update Deadlines
+      {% else %}📅 Upcoming Deadlines{% endif %}
+    </h2>
+    <p>{{ course.code }} — {{ course.name }}</p>
+  </div>
 </div>
 
+<!-- Instructor: add form -->
 {% if user.role == 'instructor' %}
-<div class="form-card">
+<div class="add-form-card">
+  <div class="add-form-title">➕ Add Deadline</div>
   <form method="POST">
-    <label for="dl-title">Deadline Title</label>
-    <input id="dl-title" type="text" name="title" placeholder="e.g. Midterm Exam" required aria-required="true">
-    <label for="dl-date">Due Date</label>
-    <input id="dl-date" type="date" name="due_date" required aria-required="true">
-    <button type="submit" class="btn btn-primary" style="margin-top:12px;">+ Add Deadline</button>
+    <div class="add-form-grid">
+      <div class="add-form-group">
+        <label for="dl-title">Title</label>
+        <input id="dl-title" type="text" name="title" placeholder="e.g. Midterm Exam" required>
+      </div>
+      <div class="add-form-group">
+        <label for="dl-date">Due Date</label>
+        <input id="dl-date" type="date" name="due_date" required>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;">
+      <button type="submit" class="btn-add-dl">➕ Add Deadline</button>
+    </div>
   </form>
 </div>
 
-<!-- AI Deadline Çıkarımı -->
-<div style="background:var(--sky-pale);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:18px;">
-  <h3 style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--navy-mid);margin-bottom:8px;">🤖 AI ile Deadline Çıkarımı</h3>
-  <p style="font-size:12px;color:var(--subtext);margin-bottom:8px;">Syllabus metnini veya bir açıklamayı yapıştırın; AI tarihleri otomatik çıkarsın.</p>
-  <textarea id="extract-text" rows="5" placeholder="Örn: 'Midterm sınavı 14 Nisan 2026, Final 25 Mayıs 2026...'"
-    style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;background:var(--input-bg);color:var(--text);"
-    aria-label="Deadline çıkarımı için metin girin"></textarea>
-  <button type="button" class="btn btn-sm" onclick="extractDeadlines()" style="margin-top:8px;background:var(--navy-mid);color:#fff;" id="extract-btn">
-    ✨ Tarihleri Çıkar
+<!-- AI extract -->
+<div class="ai-extract-card">
+  <div class="ai-extract-hdr">🤖 AI Deadline Extraction</div>
+  <div class="ai-extract-sub">Paste syllabus text or a description — AI will automatically extract dates and deadlines for you.</div>
+  <textarea id="extract-text" rows="4"
+    placeholder="e.g. 'Midterm exam on April 14, 2026, Final on May 25, 2026…'"
+    aria-label="Enter text for deadline extraction"></textarea>
+  <button type="button" class="btn-extract" onclick="extractDeadlines()" id="extract-btn">
+    ✨ Extract Dates
   </button>
-  <div id="extract-result" style="margin-top:10px;display:none;"></div>
+  <div id="extract-result"></div>
 </div>
 {% endif %}
 
+<!-- Progress bar -->
 {% if progress and progress.total %}
 <div class="prog-card">
   <div class="prog-top">
-    <span class="lbl">Your progress</span>
-    <span>{{ progress.done }} / {{ progress.total }} done · {{ progress.pct }}%</span>
+    <span class="prog-label">Your progress</span>
+    <div>
+      <span class="prog-count">{{ progress.done }} / {{ progress.total }}</span>
+      <span class="prog-pct"> · {{ progress.pct }}%</span>
+    </div>
   </div>
-  <div class="prog-track"><div class="prog-fill" style="width:{{ progress.pct }}%;"></div></div>
+  <div class="prog-track">
+    <div class="prog-fill" style="width:{{ progress.pct }}%;"></div>
+  </div>
 </div>
 {% endif %}
 
+<!-- Deadlines list -->
 {% if deadlines %}
-  <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
-    <a href="/course/{{ course.id }}/deadlines.ics" class="btn btn-sm" style="background:var(--green);color:#fff;">📅 Export to Calendar (.ics)</a>
-  </div>
+<div class="cal-export-row">
+  <a href="/course/{{ course.id }}/deadlines.ics" class="btn-cal">📅 Export to Calendar (.ics)</a>
+</div>
+
+<div class="dl-section-hdr">Deadlines</div>
+<div class="dl-list">
   {% for d in deadlines %}
-  <div class="deadline-card {% if d.done %}done{% endif %}">
-    <div class="deadline-accent"></div>
-    <div class="deadline-body">
-      <div class="deadline-title">{{ d.title }}</div>
-      <div class="deadline-date">📅 Due: {{ d.due_date }}</div>
+  <div class="dl-card {% if d.done %}done{% endif %}">
+    <div class="dl-urgency {% if d.done %}done-bar{% elif d.days is defined and d.days <= 3 %}soon{% elif d.days is defined and d.days <= 10 %}near{% else %}far{% endif %}"></div>
+    <div class="dl-body">
+      <div class="dl-title">{{ d.title }}</div>
+      <div class="dl-meta">
+        <span class="dl-date">📅 {{ d.due_date }}</span>
+        {% if d.done %}
+          <span class="dl-days-badge done-badge">✓ Done</span>
+        {% elif d.days is defined %}
+          {% if d.days <= 3 %}
+            <span class="dl-days-badge soon">{{ d.days }}d left ⚠️</span>
+          {% elif d.days <= 10 %}
+            <span class="dl-days-badge near">{{ d.days }}d left</span>
+          {% else %}
+            <span class="dl-days-badge far">{{ d.days }}d left</span>
+          {% endif %}
+        {% endif %}
+      </div>
     </div>
-    {% if user.role == 'instructor' %}
-    <div class="deadline-actions">
-      <form method="POST" action="/course/{{ course.id }}/deadlines/{{ d.id }}/delete">
-        <button type="submit" class="btn btn-danger">🗑</button>
-      </form>
+    <div class="dl-actions">
+      {% if user.role == 'instructor' %}
+        <form method="POST" action="/course/{{ course.id }}/deadlines/{{ d.id }}/delete">
+          <button type="submit" class="btn-del" title="Delete" aria-label="Delete deadline">🗑</button>
+        </form>
+      {% else %}
+        <form method="POST" action="/course/{{ course.id }}/deadlines/{{ d.id }}/toggle">
+          <button type="submit"
+                  class="check-btn {% if d.done %}checked{% endif %}"
+                  title="{{ 'Mark as not done' if d.done else 'Mark as done' }}">
+            {% if d.done %}✓{% endif %}
+          </button>
+        </form>
+      {% endif %}
     </div>
-    {% else %}
-    <div class="deadline-actions">
-      <form method="POST" action="/course/{{ course.id }}/deadlines/{{ d.id }}/toggle">
-        <button type="submit" class="check-btn {% if d.done %}checked{% endif %}" title="{{ 'Mark as not done' if d.done else 'Mark as done' }}">{% if d.done %}✓{% endif %}</button>
-      </form>
-    </div>
-    {% endif %}
   </div>
   {% endfor %}
+</div>
+
 {% else %}
   <div class="empty-state"><div class="big">📅</div>No deadlines set yet.</div>
 {% endif %}
@@ -96,45 +302,42 @@
 async function extractDeadlines() {
   const text = document.getElementById('extract-text').value.trim();
   const btn = document.getElementById('extract-btn');
-  const res_div = document.getElementById('extract-result');
-  if (!text) { alert('Lütfen metin girin.'); return; }
+  const resDiv = document.getElementById('extract-result');
+  if (!text) { alert('Please enter some text.'); return; }
   btn.disabled = true;
-  btn.textContent = '⏳ İşleniyor...';
-  res_div.style.display = 'block';
-  res_div.innerHTML = '<span style="font-size:12px;color:var(--subtext);">AI analiz ediyor...</span>';
+  btn.innerHTML = '⏳ Processing…';
+  resDiv.innerHTML = '<span style="font-size:12px;color:var(--subtext);">AI is analysing…</span>';
   try {
     const res = await fetch('/ai/extract-deadlines', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({text: text})
+      body: JSON.stringify({text})
     });
     const data = await res.json();
     if (data.ok && data.deadlines.length > 0) {
-      let html = '<p style="font-size:12px;font-weight:700;color:var(--navy-mid);margin-bottom:8px;">Bulunan tarihler — forma aktarmak için tıklayın:</p>';
-      html += '<div style="display:flex;flex-direction:column;gap:6px;">';
+      let html = '<div class="extract-found-label">Found dates — click to fill the form:</div>';
       data.deadlines.forEach(d => {
-        html += `<button type="button" onclick="fillForm('${d.title}','${d.date}')"
-          style="text-align:left;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer;">
-          📅 <strong>${d.title}</strong> — ${d.date}
+        html += `<button type="button" class="extract-btn" onclick="fillForm('${d.title}','${d.date}')">
+          📅 <strong>${d.title}</strong> &nbsp;—&nbsp; ${d.date}
         </button>`;
       });
-      html += '</div>';
-      res_div.innerHTML = html;
+      resDiv.innerHTML = html;
     } else if (data.ok) {
-      res_div.innerHTML = '<span style="font-size:12px;color:var(--subtext);">Hiç tarih bulunamadı.</span>';
+      resDiv.innerHTML = '<span style="font-size:12px;color:var(--subtext);">No dates found.</span>';
     } else {
-      res_div.innerHTML = '<span style="font-size:12px;color:var(--red);">Hata: ' + (data.error || '') + '</span>';
+      resDiv.innerHTML = `<span style="font-size:12px;color:var(--red);">Error: ${data.error || ''}</span>`;
     }
   } catch(e) {
-    res_div.innerHTML = '<span style="font-size:12px;color:var(--red);">Bağlantı hatası.</span>';
+    resDiv.innerHTML = '<span style="font-size:12px;color:var(--red);">Connection error.</span>';
   }
   btn.disabled = false;
-  btn.textContent = '✨ Tarihleri Çıkar';
+  btn.innerHTML = '✨ Extract Dates';
 }
 function fillForm(title, date) {
   document.getElementById('dl-title').value = title;
   document.getElementById('dl-date').value = date;
   document.getElementById('dl-title').focus();
+  document.getElementById('dl-title').scrollIntoView({behavior:'smooth', block:'center'});
 }
 </script>
 {% endif %}

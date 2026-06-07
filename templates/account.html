@@ -1,57 +1,107 @@
-
 {% extends "base.html" %}
 {% set active_page = 'account' %}
-
 {% block content %}
-<div class="page-hdr">
-  <h2>Account</h2>
-  <p>User profile information</p>
-</div>
+<style>
+/* Profile hero */
+.profile-hero{
+  background:linear-gradient(120deg,#0d2460 0%,#1565C0 100%);
+  border-radius:18px;padding:28px 28px 24px;margin-bottom:24px;
+  display:flex;align-items:center;gap:22px;
+  box-shadow:0 6px 24px rgba(11,42,107,.3);
+  position:relative;overflow:hidden;
+}
+.profile-hero::before{
+  content:'';position:absolute;right:-30px;top:-30px;
+  width:160px;height:160px;border-radius:50%;
+  background:rgba(255,255,255,.05);pointer-events:none;
+}
+.profile-avatar-lg{
+  width:72px;height:72px;border-radius:20px;flex-shrink:0;
+  background:linear-gradient(135deg,#42A5F5,#1976D2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;font-weight:900;color:#fff;text-transform:uppercase;
+  box-shadow:0 4px 18px rgba(66,165,245,.4);
+  position:relative;z-index:1;
+}
+.profile-info{position:relative;z-index:1;}
+.profile-name{font-size:22px;font-weight:800;color:#fff;letter-spacing:-.3px;margin-bottom:6px;}
+.profile-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.profile-chip{
+  display:inline-flex;align-items:center;gap:5px;
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);
+  border-radius:20px;padding:4px 12px;
+  font-size:12px;color:rgba(255,255,255,.85);font-weight:600;
+}
 
-<div class="info-grid">
-  <div class="info-cell">
-    <div class="info-cell-label">Username</div>
-    <div class="info-cell-value">{{ user.username }}</div>
-  </div>
+/* Section */
+.acc-section-hdr{
+  font-size:10px;font-weight:800;text-transform:uppercase;
+  letter-spacing:1px;color:var(--subtext);
+  margin-bottom:12px;margin-top:4px;
+  display:flex;align-items:center;gap:8px;
+}
+.acc-section-hdr::after{content:'';flex:1;height:1px;background:var(--border);}
 
-  <div class="info-cell">
-    <div class="info-cell-label">Role</div>
-    <div class="info-cell-value">{{ user.role|capitalize }}</div>
-  </div>
+/* Course cards */
+.acc-course-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;margin-bottom:10px;overflow:hidden;
+  box-shadow:0 2px 8px var(--shadow);
+  display:flex;
+  transition:transform .15s,box-shadow .15s;
+}
+.acc-course-card:hover{transform:translateX(3px);box-shadow:0 4px 16px var(--shadow-strong);}
+.acc-course-accent{width:4px;background:linear-gradient(180deg,var(--sky),var(--navy-mid));flex-shrink:0;}
+.acc-course-body{padding:14px 16px;flex:1;}
+.acc-course-code{
+  font-size:11px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.8px;color:var(--navy-mid);margin-bottom:4px;
+}
+.acc-course-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px;}
+.acc-course-meta{display:flex;flex-wrap:wrap;gap:8px;}
+.acc-meta-chip{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:11px;color:var(--subtext);font-weight:600;
+  background:var(--sky-pale);border-radius:6px;padding:3px 9px;
+}
 
-  <div class="info-cell">
-    <div class="info-cell-label">User ID</div>
-    <div class="info-cell-value">{{ user.user_id }}</div>
-  </div>
+@media(max-width:600px){
+  .profile-hero{flex-direction:column;text-align:center;}
+  .profile-meta{justify-content:center;}
+  .acc-info-grid{grid-template-columns:1fr;}
+}
+</style>
 
-  <div class="info-cell">
-    <div class="info-cell-label">
-      {% if user.role == 'student' %}
-        Enrolled Courses
-      {% else %}
-        Teaching Courses
-      {% endif %}
+<!-- Profile hero -->
+<div class="profile-hero">
+  <div class="profile-avatar-lg">{{ (user.full_name or user.username)[:2] }}</div>
+  <div class="profile-info">
+    <div class="profile-name">{{ user.full_name or user.username }}</div>
+    <div class="profile-meta">
+      <span class="profile-chip">{% if user.role == 'student' %}🎓{% else %}👨‍🏫{% endif %} {{ user.role|capitalize }}</span>
+      <span class="profile-chip">🆔 {{ user.username }}</span>
+      <span class="profile-chip">📚 {{ courses|length }} {{ 'Course' if courses|length == 1 else 'Courses' }}</span>
     </div>
-    <div class="info-cell-value">{{ courses|length }}</div>
   </div>
 </div>
 
-<div class="section-label">
-  {% if user.role == 'student' %}
-    Student Courses
-  {% else %}
-    Instructor Courses
-  {% endif %}
+<!-- Courses -->
+<div class="acc-section-hdr">
+  {% if user.role == 'student' %}Enrolled Courses{% else %}Courses You Teach{% endif %}
 </div>
 
 {% for c in courses %}
-  <div class="sec-card">
-    <div class="sec-card-hdr">{{ c.code }}</div>
-    <div class="sec-card-body">
-      {{ c.name }}<br>
-      <strong>Classroom:</strong> {{ c.classroom }}<br>
-      <strong>Schedule:</strong> {{ c.schedule }}
+<div class="acc-course-card">
+  <div class="acc-course-accent"></div>
+  <div class="acc-course-body">
+    <div class="acc-course-code">{{ c.code }}</div>
+    <div class="acc-course-name">{{ c.name }}</div>
+    <div class="acc-course-meta">
+      {% if c.classroom %}<span class="acc-meta-chip">🏫 {{ c.classroom }}</span>{% endif %}
+      {% if c.schedule %}<span class="acc-meta-chip">📅 {{ c.schedule }}</span>{% endif %}
     </div>
   </div>
+</div>
 {% endfor %}
+
 {% endblock %}

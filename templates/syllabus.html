@@ -1,151 +1,227 @@
 {% extends "base.html" %}
 {% set active_page = 'syllabus' %}
 {% block content %}
-
 <style>
-.vs-header{
-  background:linear-gradient(135deg,#0D47A1 0%,#1565C0 100%);
-  border-radius:14px;
-  padding:20px 28px;
-  margin-bottom:16px;
+/* Search hero */
+.syl-search-hero{
+  background:linear-gradient(120deg,#0d2460 0%,#1565C0 100%);
+  border-radius:18px;padding:24px 26px;margin-bottom:20px;
+  box-shadow:0 6px 24px rgba(11,42,107,.28);
+  position:relative;overflow:hidden;
 }
-.vs-header h2{
-  color:#fff;font-size:18px;font-weight:800;
-  letter-spacing:2px;text-transform:uppercase;
-  text-align:center;margin-bottom:16px;
+.syl-search-hero::before{
+  content:'';position:absolute;right:-20px;top:-30px;
+  width:160px;height:160px;border-radius:50%;
+  background:rgba(255,255,255,.05);pointer-events:none;
 }
-.vs-search-row{display:flex;align-items:center;gap:12px;}
-.vs-search-label{
-  color:#90CAF9;font-size:11px;font-weight:700;
-  text-transform:uppercase;letter-spacing:1px;white-space:nowrap;
+.syl-hero-title{
+  font-size:18px;font-weight:800;color:#fff;letter-spacing:-.2px;
+  margin-bottom:14px;
 }
-.vs-search-input{
-  flex:1;background:rgba(255,255,255,.15);
+.syl-search-row{display:flex;align-items:center;gap:10px;position:relative;z-index:1;}
+.syl-search-input{
+  flex:1;background:rgba(255,255,255,.12);
+  border:1.5px solid rgba(255,255,255,.25);
+  border-radius:12px;padding:11px 18px;
+  font-size:14px;color:#fff;font-family:inherit;outline:none;
+  transition:border-color .2s,background .2s,box-shadow .2s;
+}
+.syl-search-input::placeholder{color:rgba(255,255,255,.4);}
+.syl-search-input:focus{
+  border-color:rgba(255,255,255,.6);
+  background:rgba(255,255,255,.18);
+  box-shadow:0 0 0 3px rgba(255,255,255,.08);
+}
+.syl-search-btn{
+  background:rgba(255,255,255,.18);
   border:1.5px solid rgba(255,255,255,.3);
-  border-radius:24px;padding:9px 18px;
-  font-size:13px;color:#fff;font-family:inherit;outline:none;
-  transition:border-color .2s,background .2s;
-}
-.vs-search-input::placeholder{color:rgba(255,255,255,.45);}
-.vs-search-input:focus{
-  border-color:rgba(255,255,255,.7);
-  background:rgba(255,255,255,.22);
-}
-.vs-search-btn{
-  background:rgba(255,255,255,.2);
-  border:1.5px solid rgba(255,255,255,.35);
-  border-radius:50%;width:36px;height:36px;
+  border-radius:12px;width:44px;height:44px;
   display:flex;align-items:center;justify-content:center;
-  cursor:pointer;font-size:14px;color:#fff;
-  flex-shrink:0;
+  cursor:pointer;font-size:16px;color:#fff;flex-shrink:0;
+  transition:background .15s;
 }
-.vs-search-btn:hover{background:rgba(255,255,255,.35);}
+.syl-search-btn:hover{background:rgba(255,255,255,.3);}
 
-.ci-section{
-  background:linear-gradient(135deg,#1565C0 0%,#1A3A8A 100%);
-  border-radius:14px;padding:20px 24px;margin-bottom:16px;
+/* Action bar */
+.syl-action-bar{
+  display:flex;justify-content:flex-end;gap:8px;
+  margin-bottom:18px;flex-wrap:wrap;
 }
-.ci-title{
-  color:#fff;font-size:15px;font-weight:800;
-  letter-spacing:1.5px;text-transform:uppercase;
-  text-align:center;margin-bottom:16px;
+.btn-action{
+  display:inline-flex;align-items:center;gap:6px;
+  border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;
+  text-decoration:none;border:none;cursor:pointer;font-family:inherit;
+  transition:transform .15s,box-shadow .15s;
 }
-.ci-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.btn-action:hover{transform:translateY(-1px);}
+.btn-print{background:var(--navy-mid);color:#fff;box-shadow:0 2px 8px rgba(21,101,192,.25);}
+.btn-ics{background:#E8F5E9;color:#2E7D32;border:1.5px solid #A5D6A7;}
+.btn-ics:hover{background:#C8E6C9;}
+
+/* Course info */
+.course-info-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:16px;margin-bottom:20px;overflow:hidden;
+  box-shadow:0 4px 16px var(--shadow);
+}
+.ci-hdr{
+  background:linear-gradient(90deg,var(--navy-mid),#1976D2);
+  padding:14px 20px;display:flex;align-items:center;gap:12px;
+}
+.ci-hdr-icon{
+  width:40px;height:40px;border-radius:10px;
+  background:rgba(255,255,255,.15);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;
+}
+.ci-hdr-text{}
+.ci-hdr-code{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:rgba(144,202,249,.85);}
+.ci-hdr-name{font-size:16px;font-weight:800;color:#fff;margin-top:1px;}
+.ci-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:0;
+}
 .ci-cell{
-  background:rgba(255,255,255,.92);border-radius:24px;
-  padding:12px 20px;font-size:13px;color:#0D1B4B;line-height:1.6;
+  padding:14px 18px;border-bottom:1px solid var(--border);
+  border-right:1px solid var(--border);
 }
-.ci-cell strong{color:#0B2A6B;}
-
-.syllabus-sections{display:flex;flex-direction:column;gap:10px;padding-bottom:80px;}
-
-.empty-hint{
-  text-align:center;padding:60px 20px;
-  color:var(--subtext);font-size:14px;
+.ci-cell:nth-child(2n){border-right:none;}
+.ci-cell:nth-last-child(-n+2){border-bottom:none;}
+.ci-cell-label{
+  font-size:10px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.6px;color:var(--subtext);margin-bottom:4px;
 }
-.empty-hint .big{font-size:48px;margin-bottom:14px;}
-.empty-hint p{margin-top:6px;font-size:12px;color:#5C7BB8;}
+.ci-cell-value{font-size:13px;font-weight:600;color:var(--text);line-height:1.5;}
 
+/* Sections */
+.syl-sections{display:flex;flex-direction:column;gap:10px;padding-bottom:80px;}
+
+.sec-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;overflow:hidden;
+  box-shadow:0 2px 8px var(--shadow);
+  transition:box-shadow .15s;
+}
+.sec-card:hover{box-shadow:0 4px 18px var(--shadow-strong);}
+.sec-card-hdr{
+  background:var(--sky-pale);padding:12px 18px;
+  font-size:12px;font-weight:800;color:var(--navy-mid);
+  display:flex;align-items:center;justify-content:space-between;
+  cursor:pointer;user-select:none;
+  transition:background .15s;
+}
+.sec-card-hdr:hover{background:color-mix(in srgb,var(--sky-pale) 85%,var(--navy-mid));}
+html[data-theme="dark"] .sec-card-hdr:hover{background:rgba(66,165,245,.12);}
+.sec-card-toggle{font-size:12px;opacity:.5;transition:transform .2s;}
+.sec-card.collapsed .sec-card-toggle{transform:rotate(-90deg);}
+.sec-card-body{
+  padding:14px 18px;font-size:13px;color:var(--text);
+  line-height:1.75;white-space:pre-wrap;
+}
+.sec-card.collapsed .sec-card-body{display:none;}
+
+/* Empty & not-found */
+.syl-empty{text-align:center;padding:60px 20px;color:var(--subtext);}
+.syl-empty-icon{font-size:52px;margin-bottom:16px;}
+.syl-empty-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.syl-empty-sub{font-size:12px;line-height:1.5;}
 .not-found{
-  background:#FFEBEE;color:#C62828;
-  border-radius:10px;padding:16px 20px;
+  background:#FFEBEE;color:#C62828;border:1px solid #FFCDD2;
+  border-radius:12px;padding:16px 20px;
   text-align:center;font-size:13px;font-weight:600;
   margin-bottom:16px;
 }
 
-.ai-fab{
-  position:fixed;bottom:28px;right:28px;
-  width:58px;height:58px;
-  background:linear-gradient(135deg,#42A5F5,#1565C0);
-  border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-size:24px;box-shadow:0 6px 20px rgba(21,101,192,.5);
-  cursor:pointer;text-decoration:none;
-  transition:transform .2s,box-shadow .2s;z-index:999;
+@media(max-width:600px){
+  .ci-grid{grid-template-columns:1fr;}
+  .ci-cell{border-right:none;}
+  .ci-cell:nth-last-child(-n+2){border-bottom:1px solid var(--border);}
+  .ci-cell:last-child{border-bottom:none;}
 }
-.ai-fab:hover{transform:scale(1.1);box-shadow:0 10px 28px rgba(21,101,192,.6);}
 </style>
 
-<!-- HEADER + ARAMA -->
-<div class="vs-header">
-  <h2>View Syllabus</h2>
+<!-- Search hero -->
+<div class="syl-search-hero">
+  <div class="syl-hero-title">📖 View Syllabus</div>
   <form method="GET" action="/syllabus/search">
-    <div class="vs-search-row">
-      <span class="vs-search-label">Course Code / Name</span>
-      <input
-        class="vs-search-input"
-        type="text"
-        name="q"
-        value="{{ q if q else '' }}"
-        placeholder="Search your enrolled courses..."
-        autofocus
-      >
-      <button type="submit" class="vs-search-btn">🔍</button>
+    <div class="syl-search-row">
+      <input class="syl-search-input" type="text" name="q"
+             value="{{ q if q else '' }}"
+             placeholder="Search by course code or name…"
+             autofocus>
+      <button type="submit" class="syl-search-btn">🔍</button>
     </div>
   </form>
 </div>
 
 {% if not q %}
-  <div class="empty-hint">
-    <div class="big">📖</div>
-    Search your enrolled courses.
-    <p>Type a course code or name above.</p>
+  <div class="syl-empty">
+    <div class="syl-empty-icon">📖</div>
+    <div class="syl-empty-title">Search your enrolled courses</div>
+    <div class="syl-empty-sub">Type a course code or name above to view its full syllabus.</div>
   </div>
 
 {% elif not course %}
-  <div class="not-found">
-    No enrolled course found matching "{{ q }}".
-  </div>
+  <div class="not-found">No enrolled course found matching "{{ q }}".</div>
 
 {% else %}
-  <div style="display:flex;gap:10px;justify-content:flex-end;margin-bottom:14px;flex-wrap:wrap;">
-    <a href="/course/{{ course.id }}/syllabus/print" target="_blank" class="btn btn-sm btn-primary">🖨 Print / PDF</a>
-    <a href="/course/{{ course.id }}/deadlines.ics" class="btn btn-sm" style="background:var(--green);color:#fff;">📅 Add to Calendar</a>
+  <!-- Action bar -->
+  <div class="syl-action-bar">
+    <a href="/course/{{ course.id }}/syllabus/print" target="_blank" class="btn-action btn-print">🖨 Print / PDF</a>
+    <a href="/course/{{ course.id }}/deadlines.ics" class="btn-action btn-ics">📅 Add to Calendar</a>
   </div>
-  <div class="ci-section">
-    <div class="ci-title">Course Information</div>
-    <div class="ci-grid">
-      <div class="ci-cell"><strong>Course Name:</strong><br>{{ course.name }}</div>
-      <div class="ci-cell"><strong>Course Code:</strong> {{ course.code }}</div>
-      <div class="ci-cell"><strong>e-mail:</strong> {{ course.email }}</div>
-      <div class="ci-cell">
-        <strong>Office:</strong> {{ course.office }}<br>
-        <strong>Office Hours:</strong> {{ course.office_hours }}
+
+  <!-- Course info -->
+  <div class="course-info-card">
+    <div class="ci-hdr">
+      <div class="ci-hdr-icon">📚</div>
+      <div class="ci-hdr-text">
+        <div class="ci-hdr-code">{{ course.code }}</div>
+        <div class="ci-hdr-name">{{ course.name }}</div>
       </div>
-      <div class="ci-cell"><strong>Schedule:</strong> {{ course.schedule }}</div>
-      <div class="ci-cell"><strong>Classroom:</strong> {{ course.classroom }}</div>
+    </div>
+    <div class="ci-grid">
+      <div class="ci-cell">
+        <div class="ci-cell-label">Email</div>
+        <div class="ci-cell-value">{{ course.email or '—' }}</div>
+      </div>
+      <div class="ci-cell">
+        <div class="ci-cell-label">Office</div>
+        <div class="ci-cell-value">{{ course.office or '—' }}</div>
+      </div>
+      <div class="ci-cell">
+        <div class="ci-cell-label">Office Hours</div>
+        <div class="ci-cell-value">{{ course.office_hours or '—' }}</div>
+      </div>
+      <div class="ci-cell">
+        <div class="ci-cell-label">Schedule</div>
+        <div class="ci-cell-value">{{ course.schedule or '—' }}</div>
+      </div>
+      <div class="ci-cell">
+        <div class="ci-cell-label">Classroom</div>
+        <div class="ci-cell-value">{{ course.classroom or '—' }}</div>
+      </div>
     </div>
   </div>
 
-  <div class="syllabus-sections">
+  <!-- Sections (collapsible) -->
+  <div class="syl-sections">
     {% for sec in sections %}
-    <div class="sec-card">
-      <div class="sec-card-hdr">{{ sec.section_name }}</div>
+    <div class="sec-card" id="sec-{{ loop.index }}">
+      <div class="sec-card-hdr" onclick="toggleSection('sec-{{ loop.index }}')">
+        <span>{{ sec.section_name }}</span>
+        <span class="sec-card-toggle">▼</span>
+      </div>
       <div class="sec-card-body">{{ sec.content }}</div>
     </div>
     {% endfor %}
   </div>
-
-  <a href="/course/{{ course.id }}/ai" class="ai-fab" title="AI Assistant">🤖</a>
 {% endif %}
 
+<script>
+function toggleSection(id) {
+  const card = document.getElementById(id);
+  if (card) card.classList.toggle('collapsed');
+}
+</script>
 {% endblock %}

@@ -1,38 +1,128 @@
 {% extends "base.html" %}
 {% set active_page = 'notifications' %}
 {% block content %}
-<div class="page-hdr">
-  <h2>🔔 Bildirimler</h2>
-  <p>Syllabus değişiklikleri, yeni duyurular ve deadline hatırlatıcılar</p>
+<style>
+.notif-page-hdr{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px;}
+.notif-page-title{font-size:20px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:10px;}
+.notif-page-sub{font-size:12px;color:var(--subtext);margin-top:3px;}
+.notif-mark-all{
+  display:flex;align-items:center;gap:6px;
+  background:var(--card);border:1.5px solid var(--border);
+  color:var(--navy-mid);border-radius:10px;
+  padding:8px 14px;font-size:12px;font-weight:700;
+  cursor:pointer;font-family:inherit;
+  transition:background .18s,border-color .18s;white-space:nowrap;
+}
+.notif-mark-all:hover{background:var(--sky-pale);border-color:var(--navy-mid);}
+
+.notif-list{display:flex;flex-direction:column;gap:8px;}
+
+.notif-item{
+  display:flex;align-items:stretch;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;overflow:hidden;
+  box-shadow:0 2px 8px var(--shadow);
+  transition:transform .15s,box-shadow .15s;
+}
+.notif-item:hover{transform:translateX(2px);box-shadow:0 4px 16px var(--shadow-strong);}
+.notif-item.unread{border-color:rgba(66,165,245,.35);}
+.notif-item.unread{background:color-mix(in srgb,var(--card) 96%,#42A5F5);}
+html[data-theme="dark"] .notif-item.unread{background:rgba(21,101,192,.08);}
+
+.notif-accent{width:4px;flex-shrink:0;}
+.notif-accent.announcement{background:#42A5F5;}
+.notif-accent.deadline{background:#E53935;}
+.notif-accent.syllabus_change{background:#43A047;}
+.notif-accent.default{background:var(--navy-mid);}
+
+.notif-icon{
+  width:48px;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;font-size:18px;
+  background:var(--sky-pale);
+}
+html[data-theme="dark"] .notif-icon{background:rgba(255,255,255,.04);}
+.notif-icon.deadline-icon{background:#FFEBEE;}
+html[data-theme="dark"] .notif-icon.deadline-icon{background:rgba(229,57,53,.12);}
+.notif-icon.syllabus-icon{background:#E8F5E9;}
+html[data-theme="dark"] .notif-icon.syllabus-icon{background:rgba(67,160,71,.12);}
+
+.notif-body{flex:1;padding:12px 14px;min-width:0;}
+.notif-msg{font-size:13px;color:var(--text);line-height:1.5;}
+.notif-item.unread .notif-msg{font-weight:600;}
+.notif-meta{display:flex;align-items:center;gap:8px;margin-top:5px;}
+.notif-course{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--navy-mid);}
+.notif-time{font-size:10px;color:var(--subtext);}
+.notif-dot{width:4px;height:4px;border-radius:50%;background:var(--border);}
+
+.notif-action{
+  display:flex;align-items:center;padding:0 14px;flex-shrink:0;
+}
+.notif-read-btn{
+  font-size:11px;font-weight:700;
+  background:var(--sky-pale);color:var(--navy-mid);
+  border:1px solid var(--border);border-radius:8px;
+  padding:6px 11px;cursor:pointer;font-family:inherit;
+  transition:background .15s,border-color .15s;white-space:nowrap;
+}
+.notif-read-btn:hover{background:var(--navy-mid);color:#fff;border-color:var(--navy-mid);}
+.notif-read-check{font-size:12px;color:var(--subtext);padding:4px;}
+
+.notif-empty{
+  text-align:center;padding:60px 20px;
+  color:var(--subtext);
+}
+.notif-empty-icon{font-size:48px;margin-bottom:14px;}
+.notif-empty-text{font-size:14px;font-weight:600;margin-bottom:4px;color:var(--text);}
+.notif-empty-sub{font-size:12px;}
+</style>
+
+<div class="notif-page-hdr">
+  <div>
+    <div class="notif-page-title">🔔 Notifications</div>
+    <div class="notif-page-sub">Syllabus changes, announcements &amp; deadline reminders</div>
+  </div>
+  {% if notifications %}
+  <form method="POST" action="/notifications/read-all">
+    <button type="submit" class="notif-mark-all">✓ Mark all as read</button>
+  </form>
+  {% endif %}
 </div>
 
 {% if notifications %}
-<div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
-  <form method="POST" action="/notifications/read-all">
-    <button type="submit" class="btn btn-sm" style="background:var(--card);border:1.5px solid var(--border);color:var(--navy-mid);">
-      ✅ Tümünü Okundu İşaretle
-    </button>
-  </form>
-</div>
-{% for n in notifications %}
-<div style="background:var(--card);border:1px solid {% if not n.is_read %}var(--navy-mid){% else %}var(--border){% endif %};border-left:4px solid {% if n.notif_type=='announcement' %}var(--sky){% elif n.notif_type=='deadline' %}var(--red){% elif n.notif_type=='syllabus_change' %}var(--green){% else %}var(--navy-mid){% endif %};border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 1px 4px var(--shadow);">
-  <div style="flex:1;">
-    <div style="font-size:13px;font-weight:{% if not n.is_read %}700{% else %}400{% endif %};color:var(--text);">{{ n.message }}</div>
-    <div style="font-size:10px;color:var(--subtext);margin-top:4px;">{{ n.code }} · {{ n.created_at[:16] if n.created_at else '' }}</div>
+<div class="notif-list">
+  {% for n in notifications %}
+  {% set icon = '📢' if n.notif_type == 'announcement' else ('📅' if n.notif_type == 'deadline' else ('📝' if n.notif_type == 'syllabus_change' else '🔔')) %}
+  {% set icon_class = ('deadline-icon' if n.notif_type == 'deadline' else ('syllabus-icon' if n.notif_type == 'syllabus_change' else '')) %}
+  <div class="notif-item {% if not n.is_read %}unread{% endif %}">
+    <div class="notif-accent {{ n.notif_type or 'default' }}"></div>
+    <div class="notif-icon {{ icon_class }}">{{ icon }}</div>
+    <div class="notif-body">
+      <div class="notif-msg">{{ n.message }}</div>
+      <div class="notif-meta">
+        <span class="notif-course">{{ n.code }}</span>
+        <span class="notif-dot"></span>
+        <span class="notif-time">{{ n.created_at[:16] if n.created_at else '' }}</span>
+      </div>
+    </div>
+    <div class="notif-action">
+      {% if not n.is_read %}
+        <form method="POST" action="/notifications/{{ n.id }}/read">
+          <button type="submit" class="notif-read-btn" aria-label="Mark as read">Mark read</button>
+        </form>
+      {% else %}
+        <span class="notif-read-check" title="Read">✓</span>
+      {% endif %}
+    </div>
   </div>
-  {% if not n.is_read %}
-  <form method="POST" action="/notifications/{{ n.id }}/read">
-    <button type="submit" class="btn btn-sm" style="font-size:11px;background:var(--sky-pale);color:var(--navy-mid);border:1px solid var(--border);" aria-label="Okundu olarak işaretle">Okundu</button>
-  </form>
-  {% else %}
-  <span style="font-size:10px;color:var(--subtext);">✓ Okundu</span>
-  {% endif %}
+  {% endfor %}
 </div>
-{% endfor %}
+
 {% else %}
-<div class="empty-state">
-  <div class="big">🔔</div>
-  Henüz bildirim yok.
+<div class="notif-empty">
+  <div class="notif-empty-icon">🔔</div>
+  <div class="notif-empty-text">All caught up!</div>
+  <div class="notif-empty-sub">No notifications yet.</div>
 </div>
 {% endif %}
+
 {% endblock %}
