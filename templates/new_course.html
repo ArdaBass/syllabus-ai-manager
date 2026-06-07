@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="max-width:540px;margin:0 auto;">
+<div class="page-hdr">
+  <h2>➕ Yeni Ders Oluştur</h2>
+  <p>Ders bilgilerini eksiksiz doldurun</p>
+</div>
+
+{% if errors %}
+<div class="flash error" role="alert">
+  {% for e in errors %}<div>⚠️ {{ e }}</div>{% endfor %}
+</div>
+{% endif %}
+
+<div class="form-card">
+  <form method="POST" novalidate id="course-form">
+    <label for="f-code">Ders Kodu <span style="color:var(--red);">*</span></label>
+    <input id="f-code" type="text" name="code"
+      value="{{ form_data.code if form_data else '' }}"
+      placeholder="Örn: CSE3011, INE4211"
+      required style="text-transform:uppercase;">
+
+    <label for="f-name">Ders Adı <span style="color:var(--red);">*</span></label>
+    <input id="f-name" type="text" name="name"
+      value="{{ form_data.name if form_data else '' }}"
+      placeholder="Tam ders adı" required>
+
+    <label for="f-dept">Bölüm</label>
+    <input id="f-dept" type="text" name="department"
+      value="{{ form_data.department if form_data else '' }}"
+      placeholder="Örn: Software Engineering">
+
+    <label for="f-credit">Kredi</label>
+    <input id="f-credit" type="number" name="credit"
+      value="{{ form_data.credit if form_data else '3' }}"
+      min="1" max="9">
+
+    <label for="f-classroom">Derslik</label>
+    <input id="f-classroom" type="text" name="classroom"
+      value="{{ form_data.classroom if form_data else '' }}"
+      placeholder="Örn: A105, DSC02, B201"
+      pattern="[A-Za-z]{1,4}[0-9]{2,4}[A-Za-z]?"
+      title="Bina harfi + oda numarası (Örn: A105, DSC02)">
+    <div id="cls-err" style="display:none;font-size:11px;color:var(--red);margin-top:3px;">
+      ⚠️ Geçersiz format. Örn: A105, DSC02, B201
+    </div>
+
+    <label for="f-schedule">Program</label>
+    <input id="f-schedule" type="text" name="schedule"
+      value="{{ form_data.schedule if form_data else '' }}"
+      placeholder="Örn: Monday 13:30–17:20">
+
+    <label for="f-email">Ders E-postası</label>
+    <input id="f-email" type="email" name="email"
+      value="{{ form_data.email if form_data else '' }}"
+      placeholder="Örn: cse3011@bau.edu.tr">
+    <div id="email-err" style="display:none;font-size:11px;color:var(--red);margin-top:3px;">
+      ⚠️ Geçerli bir e-posta adresi girin.
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="margin-top:18px;">✓ Ders Oluştur</button>
+  </form>
+</div>
+</div>
+
+<script>
+const clsInput   = document.getElementById('f-classroom');
+const emailInput = document.getElementById('f-email');
+const clsErr     = document.getElementById('cls-err');
+const emailErr   = document.getElementById('email-err');
+const clsRe      = /^[A-Za-z]{1,4}\d{2,4}[A-Za-z]?$/;
+const emailRe    = /^[\w.\-\+]+@[\w\-]+\.[a-z]{2,}(\.[a-z]{2,})?$/i;
+
+clsInput.addEventListener('input', () => {
+  const v = clsInput.value.trim();
+  clsErr.style.display = (v && !clsRe.test(v)) ? 'block' : 'none';
+});
+
+emailInput.addEventListener('input', () => {
+  const v = emailInput.value.trim();
+  emailErr.style.display = (v && !emailRe.test(v)) ? 'block' : 'none';
+});
+
+document.getElementById('course-form').addEventListener('submit', function(e) {
+  const cls   = clsInput.value.trim();
+  const email = emailInput.value.trim();
+  let ok = true;
+  if (cls && !clsRe.test(cls))   { clsErr.style.display   = 'block'; ok = false; }
+  if (email && !emailRe.test(email)) { emailErr.style.display = 'block'; ok = false; }
+  if (!ok) e.preventDefault();
+});
+</script>
+{% endblock %}

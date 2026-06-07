@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% set active_page = 'feedback' %}
+{% block content %}
+<style>
+.star-rating{display:flex;flex-direction:row-reverse;gap:4px;justify-content:flex-start;}
+.star-rating input{display:none;}
+.star-rating label{font-size:22px;cursor:pointer;color:var(--border);}
+.star-rating input:checked ~ label,.star-rating label:hover,.star-rating label:hover ~ label{color:#FFC107;}
+.fb-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px var(--shadow);}
+.fb-meta{font-size:10px;color:var(--subtext);margin-top:6px;}
+.star-display{color:#FFC107;font-size:14px;}
+.avg-card{background:var(--navy-mid);color:#fff;border-radius:12px;padding:16px 20px;margin-bottom:18px;display:flex;align-items:center;gap:20px;}
+.avg-score{font-size:42px;font-weight:800;line-height:1;}
+.avg-stars{font-size:20px;color:#FFC107;letter-spacing:2px;}
+.avg-label{font-size:11px;opacity:.8;margin-top:4px;}
+</style>
+
+<div class="page-hdr" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+  <div>
+    <h2>💬 Ders Geri Bildirimi — {{ course.code }}</h2>
+    <p>{% if user.role == 'student' %}Görüşlerinizi paylaşın{% else %}Öğrenci görüşleri{% endif %}</p>
+  </div>
+  {% if courses and courses|length > 1 %}
+  <div style="position:relative;">
+    <button onclick="toggleCourseMenu()" id="course-picker-btn"
+      style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.35);color:#fff;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap;"
+      aria-haspopup="true" aria-expanded="false">
+      📘 {{ course.code }} <span style="font-size:10px;opacity:.7;">▼</span>
+    </button>
+    <div id="course-menu"
+      style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 16px var(--shadow-strong);min-width:220px;z-index:50;overflow:hidden;">
+      {% for c in courses %}
+      <a href="/course/{{ c.id }}/feedback"
+        style="display:block;padding:10px 16px;font-size:13px;text-decoration:none;color:{% if c.id == course.id %}var(--navy-mid){% else %}var(--text){% endif %};font-weight:{% if c.id == course.id %}700{% else %}400{% endif %};background:{% if c.id == course.id %}var(--sky-pale){% else %}transparent{% endif %};">
+        {% if c.id == course.id %}✓ {% endif %}{{ c.code }} — {{ c.name }}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Instructor: ortalama puan kartı -->
+{% if user.role == 'instructor' and avg_rating %}
+<div class="avg-card">
+  <div class="avg-score">{{ avg_rating }}</div>
+  <div>
+    <div class="avg-stars">
+      {% set full = avg_rating | int %}
+      {% set half = 1 if (avg_rating - full) >= 0.5 else 0 %}
+      {{ '★' * full }}{{ '½' if half else '' }}{{ '☆' * (5 - full - half) }}
+    </div>
+    <div class="avg-label">{{ total_rated }} değerlendirme · Ortalama puan</div>
+  </div>
+</div>
+{% elif user.role == 'instructor' %}
+<div style="background:var(--sky-pale);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:18px;font-size:13px;color:var(--subtext);">
+  Henüz puanlama yapılmamış.
+</div>
+{% endif %}
+
+<!-- Student: geri bildirim formu -->
+{% if user.role == 'student' %}
+<div class="form-card">
+  <form method="POST">
+    <label for="fb-content">Görüşünüz</label>
+    <textarea id="fb-content" name="content" rows="4" placeholder="Bu ders hakkında ne düşünüyorsunuz?" required aria-required="true"></textarea>
+    <label>Değerlendirme</label>
+    <div class="star-rating" role="radiogroup" aria-label="Ders puanı">
+      {% for i in [5,4,3,2,1] %}
+      <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}" aria-label="{{ i }} yıldız">
+      <label for="star{{ i }}" title="{{ i }} yıldız">★</label>
+      {% endfor %}
+    </div>
+    <button type="submit" class="btn btn-primary" style="margin-top:12px;">💬 Gönder</button>
+  </form>
+</div>
+{% endif %}
+
+<!-- Feedback listesi -->
+{% if feedbacks %}
+  <h3 style="font-size:12px;font-weight:800;letter-spacing:.6px;color:var(--navy-mid);margin-bottom:10px;">
+    {% if user.role == 'instructor' %}Tüm Geri Bildirimler ({{ feedbacks|length }}){% else %}Onaylı Görüşler{% endif %}
+  </h3>
+  {% for f in feedbacks %}
+  <div class="fb-card">
+    {% if f.rating %}
+    <div class="star-display" aria-label="{{ f.rating }} yıldız">{{ '★' * f.rating }}{{ '☆' * (5 - f.rating) }}</div>
+    {% endif %}
+    <div style="font-size:13px;color:var(--text);margin-top:4px;">{{ f.content }}</div>
+    <div class="fb-meta">
+      {% if user.role == 'instructor' %}{{ f.username }} · {% endif %}
+      {{ f.created_at[:16] if f.created_at else '' }}
+    </div>
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="empty-state"><div class="big">💬</div>Henüz geri bildirim yok.</div>
+{% endif %}
+
+<script>
+function toggleCourseMenu() {
+  const menu = document.getElementById('course-menu');
+  const btn  = document.getElementById('course-picker-btn');
+  if (!menu) return;
+  const open = menu.style.display !== 'none';
+  menu.style.display = open ? 'none' : 'block';
+  btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+}
+document.addEventListener('click', function(e) {
+  const btn  = document.getElementById('course-picker-btn');
+  const menu = document.getElementById('course-menu');
+  if (menu && btn && !btn.contains(e.target) && !menu.contains(e.target)) {
+    menu.style.display = 'none';
+    if(btn) btn.setAttribute('aria-expanded', 'false');
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% set active_page = 'course_schedule' %}
+{% block content %}
+
+<div class="page-hdr">
+  <h2>📅 Course Schedule</h2>
+  <p>Your enrolled courses and class times</p>
+</div>
+
+{% for c in courses %}
+<div class="deadline-card">
+  <div class="deadline-accent"></div>
+  <div class="deadline-body">
+    <div class="deadline-title">{{ c.code }} — {{ c.name }}</div>
+    <div class="deadline-date">🕐 {{ c.schedule }}</div>
+    <div class="deadline-date" style="margin-top:4px;">📍 {{ c.classroom }}</div>
+  </div>
+</div>
+{% endfor %}
+
+{% endblock %}

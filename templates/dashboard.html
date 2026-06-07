@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="dashboard-layout">
+  <div>
+    {% set cid = current_course.id if current_course else 0 %}
+    <div class="tiles-grid">
+      <a href="/course/{{ cid }}/syllabus" class="tile tile-light tile-tall">
+        <div class="tile-label">VIEW<br>SYLLABUS</div>
+        <div class="tile-arrow">→</div>
+      </a>
+
+      {% if user.role == 'student' %}
+        <a href="/course/{{ cid }}/deadlines" class="tile tile-light">
+          <div class="tile-label">UPCOMING<br>DEADLINES</div>
+        </a>
+        <a href="/course/{{ cid }}/announcements" class="tile tile-light">
+          <div class="tile-label">ANNOUNCEMENTS</div>
+        </a>
+        <a href="/course/{{ cid }}/search" class="tile tile-dark">
+          <div class="tile-plus">+</div>
+          <div class="tile-label">SEARCH<br>SYLLABUS</div>
+        </a>
+        <a href="/all-policies" class="tile tile-dark">
+          <div class="tile-plus">+</div>
+          <div class="tile-label">COURSE<br>POLICIES</div>
+        </a>
+      {% else %}
+        <a href="/course/{{ cid }}/deadlines" class="tile tile-light">
+          <div class="tile-plus">+</div>
+          <div class="tile-label">UPDATE<br>DEADLINES</div>
+        </a>
+        <a href="/course/{{ cid }}/announcements" class="tile tile-light">
+          <div class="tile-plus">+</div>
+          <div class="tile-label">POST<br>ANNOUNCEMENT</div>
+        </a>
+        <a href="/course/{{ cid }}/edit" class="tile tile-dark">
+          <div class="tile-plus">+</div>
+          <div class="tile-label">EDIT<br>SYLLABUS</div>
+        </a>
+        <a href="/all-policies" class="tile tile-dark">
+          <div class="tile-plus">+</div>
+          <div class="tile-label">COURSE<br>POLICIES</div>
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="side-tiles">
+    <div class="countdown-card">
+      <h3>⏳ Upcoming Deadlines</h3>
+      {% if upcoming %}
+        {% for d in upcoming %}
+          <a href="/course/{{ d.course_id }}/deadlines" class="countdown-item" style="text-decoration:none;">
+            <div class="countdown-days {% if d.days <= 3 %}cd-soon{% elif d.days <= 10 %}cd-near{% else %}cd-far{% endif %}">
+              <span class="num">{{ d.days }}</span>
+              <span class="lbl">{{ 'day' if d.days == 1 else 'days' }}</span>
+            </div>
+            <div class="countdown-meta">
+              <div class="countdown-title">{{ d.title }}</div>
+              <div class="countdown-sub">{{ d.course_code }} · {{ d.due_date }}</div>
+            </div>
+          </a>
+        {% endfor %}
+      {% else %}
+        <div class="countdown-empty">No upcoming deadlines 🎉</div>
+      {% endif %}
+    </div>
+    <a href="/account" class="side-tile">👤 Account</a>
+    <a href="/course-schedule" class="side-tile">📅 Course Schedule</a>
+    <a href="/exam-schedule" class="side-tile">📝 Exam Schedule</a>
+  </div>
+</div>
+{% endblock %}

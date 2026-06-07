@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% set active_page = 'global' %}
+{% block content %}
+<div class="page-hdr">
+  <h2>🌐 Search All Courses</h2>
+  <p>Anahtar kelime veya doğal dil sorgusuyla tüm derslerinizde arama yapın</p>
+</div>
+
+<div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+  <form method="GET" action="/search/global" class="search-bar" style="flex:1;min-width:240px;margin:0;">
+    <input type="text" name="q" value="{{ q if q else '' }}"
+           placeholder="Arama yapın..." autofocus aria-label="Ders içeriğinde ara">
+    <button type="submit" class="btn btn-primary">🔍 Ara</button>
+  </form>
+  <button type="button" class="btn btn-sm" onclick="toggleSemantic()"
+    style="background:var(--navy-mid);color:#fff;" id="smart-btn" aria-expanded="false">
+    🧠 Akıllı Arama (AI)
+  </button>
+</div>
+
+<!-- Semantik Arama Paneli -->
+<div id="semantic-panel" style="display:none;background:var(--sky-pale);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:18px;">
+  <h3 style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--navy-mid);margin-bottom:8px;">🧠 AI Semantik Arama</h3>
+  <p style="font-size:12px;color:var(--subtext);margin-bottom:8px;">Doğal dilde soru sorun; AI ilgili syllabus bölümlerini bulsun.</p>
+  <div style="display:flex;gap:8px;">
+    <input type="text" id="smart-query" placeholder="Örn: 'Proje teslim gereksinimleri neler?'"
+      style="flex:1;background:var(--input-bg);border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;font-size:13px;font-family:inherit;color:var(--text);outline:none;"
+      aria-label="AI semantik arama sorgusu">
+    <button type="button" class="btn btn-primary btn-sm" onclick="doSemanticSearch()" id="smart-search-btn">Ara</button>
+  </div>
+  <div id="semantic-result" style="margin-top:12px;"></div>
+</div>
+
+{% if not q %}
+  <div class="empty-state">
+    <div class="big">🌐</div>
+    Bir anahtar kelime girin ya da 🧠 Akıllı Arama ile doğal dil sorgulayın.
+  </div>
+{% elif total == 0 %}
+  <div class="empty-state">
+    <div class="big">🔍</div>
+    "{{ q }}" için sonuç bulunamadı.
+  </div>
+{% else %}
+  <p style="font-size:12px;color:var(--subtext);margin-bottom:16px;">
+    <strong>{{ total }}</strong> sonuç bulundu: "{{ q }}"
+  </p>
+  {% for g in groups %}
+    <div class="gs-group">
+      <div class="gs-course-hdr">📘 {{ g.course.code }} · {{ g.course.name }}</div>
+      {% for item in g.results %}
+        <a href="{{ item.url }}" class="gs-result">
+          <span class="gs-tag">{{ item.tag }}</span>
+          <div class="gs-title">{{ item.title }}</div>
+          {% if item.snippet %}<div class="gs-snippet">{{ item.snippet }}</div>{% endif %}
+        </a>
+      {% endfor %}
+    </div>
+  {% endfor %}
+{% endif %}
+
+<script>
+function toggleSemantic() {
+  const panel = document.getElementById('semantic-panel');
+  const btn = document.getElementById('smart-btn');
+  const open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'block';
+  btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+  if (!open) document.getElementById('smart-query').focus();
+}
+
+async function doSemanticSearch() {
+  const q = document.getElementById('smart-query').value.trim();
+  const btn = document.getElementById('smart-search-btn');
+  const res_div = document.getElementById('semantic-result');
+  if (!q) { res_div.innerHTML = '<span style="font-size:12px;color:var(--red);">Lütfen bir sorgu girin.</span>'; return; }
+  btn.disabled = true; btn.textContent = '⏳';
+  res_div.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;font-size:12px;color:var(--subtext);">
+      <div style="width:18px;height:18px;border:2px solid var(--navy-mid);border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;"></div>
+      AI syllabus içeriğini analiz ediyor...
+    </div>`;
+  try {
+    const res = await fetch('/ai/semantic-search', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({q: q})
+    });
+    const data = await res.json();
+    if (data.ok) {
+      const d = data.data;
+      let html = '';
+      if (d.keywords && d.keywords.length) {
+        const chips = d.keywords.map(kw =>
+          `<button type="button" class="chip" style="font-size:11px;padding:4px 10px;"
+            onclick="document.getElementById('smart-query').value='${kw.replace(/'/g,"\\'")}';doSemanticSearch();">${kw}</button>`
+        ).join('');
+        html += `<div style="margin-bottom:10px;"><span style="font-size:11px;color:var(--subtext);margin-right:6px;">💡 Alternatif aramalar:</span>${chips}</div>`;
+      }
+      if (d.results && d.results.length) {
+        html += '<div style="display:flex;flex-direction:column;gap:8px;">';
+        d.results.forEach(r => {
+          const url = r.course_id ? `/course/${r.course_id}/syllabus` : '#';
+          const courseName = r.course_name ? `<span style="font-size:10px;color:var(--subtext);display:block;margin-top:1px;">${r.course_name}</span>` : '';
+          html += `<a href="${url}" class="gs-result" style="display:block;text-decoration:none;" aria-label="${r.course_code} — ${r.section}">
+            <span class="gs-tag">📘 ${r.course_code}</span>
+            ${courseName}
+            <div class="gs-title" style="margin-top:4px;">${r.section}</div>
+            <div class="gs-snippet" style="margin-top:3px;">🤖 ${r.reason}</div>
+          </a>`;
+        });
+        html += '</div>';
+        html += `<p style="font-size:10px;color:var(--subtext);margin-top:8px;text-align:right;">AI tarafından ${d.results.length} bölüm bulundu · Ders syllabus'una gitmek için tıklayın</p>`;
+      } else {
+        html += '<div class="empty-state" style="padding:20px;"><div class="big" style="font-size:24px;">🔍</div>Bu sorguyla ilgili bölüm bulunamadı. Farklı bir ifade deneyin.</div>';
+      }
+      res_div.innerHTML = html;
+    } else {
+      res_div.innerHTML = `<div style="background:#FFEBEE;border-radius:8px;padding:10px 14px;font-size:12px;color:var(--red);">⚠️ ${data.error || 'Bilinmeyen hata'}</div>`;
+    }
+  } catch(e) {
+    res_div.innerHTML = '<div style="background:#FFEBEE;border-radius:8px;padding:10px 14px;font-size:12px;color:var(--red);">⚠️ Sunucuya bağlanılamadı. Lütfen tekrar deneyin.</div>';
+  }
+  btn.disabled = false; btn.textContent = 'Ara';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const inp = document.getElementById('smart-query');
+  if (inp) inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') doSemanticSearch(); });
+});
+</script>
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+{% endblock %}

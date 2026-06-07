@@ -1,0 +1,57 @@
+
+{% extends "base.html" %}
+{% set active_page = 'account' %}
+
+{% block content %}
+<div class="page-hdr">
+  <h2>Account</h2>
+  <p>User profile information</p>
+</div>
+
+<div class="info-grid">
+  <div class="info-cell">
+    <div class="info-cell-label">Username</div>
+    <div class="info-cell-value">{{ user.username }}</div>
+  </div>
+
+  <div class="info-cell">
+    <div class="info-cell-label">Role</div>
+    <div class="info-cell-value">{{ user.role|capitalize }}</div>
+  </div>
+
+  <div class="info-cell">
+    <div class="info-cell-label">User ID</div>
+    <div class="info-cell-value">{{ user.user_id }}</div>
+  </div>
+
+  <div class="info-cell">
+    <div class="info-cell-label">
+      {% if user.role == 'student' %}
+        Enrolled Courses
+      {% else %}
+        Teaching Courses
+      {% endif %}
+    </div>
+    <div class="info-cell-value">{{ courses|length }}</div>
+  </div>
+</div>
+
+<div class="section-label">
+  {% if user.role == 'student' %}
+    Student Courses
+  {% else %}
+    Instructor Courses
+  {% endif %}
+</div>
+
+{% for c in courses %}
+  <div class="sec-card">
+    <div class="sec-card-hdr">{{ c.code }}</div>
+    <div class="sec-card-body">
+      {{ c.name }}<br>
+      <strong>Classroom:</strong> {{ c.classroom }}<br>
+      <strong>Schedule:</strong> {{ c.schedule }}
+    </div>
+  </div>
+{% endfor %}
+{% endblock %}

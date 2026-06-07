@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% set active_page = 'info' %}
+{% block content %}
+<div class="page-hdr"><h2>Course Information</h2></div>
+
+<div class="info-grid">
+  <div class="info-cell">
+    <div class="info-cell-label">Course Name</div>
+    <div class="info-cell-value">{{ course.name }}</div>
+  </div>
+  <div class="info-cell">
+    <div class="info-cell-label">Course Code</div>
+    <div class="info-cell-value">{{ course.code }}</div>
+  </div>
+  <div class="info-cell">
+    <div class="info-cell-label">Instructor Name</div>
+    <div class="info-cell-value">{{ ((instructor.title + ' ') if instructor and instructor.title else '') + (instructor.full_name or instructor.username) if instructor else '—' }}</div>
+  </div>
+  <div class="info-cell">
+    <div class="info-cell-label">E-mail</div>
+    <div class="info-cell-value">{{ course.email }}</div>
+  </div>
+  <div class="info-cell">
+    <div class="info-cell-label">Office</div>
+    <div class="info-cell-value">{{ course.office }}<br><small style="color:var(--subtext)">Hours: {{ course.office_hours }}</small></div>
+  </div>
+  <div class="info-cell">
+    <div class="info-cell-label">CV Link</div>
+    <div class="info-cell-value" style="color:var(--navy-mid)">{{ course.cv_link }}</div>
+  </div>
+  <div class="info-cell">
+    <div class="info-cell-label">Time / Schedule</div>
+    <div class="info-cell-value">{{ course.schedule }}</div>
+  </div>
+  <div class="info-cell">
+    <div class="info-cell-label">Model of Delivery</div>
+    <div class="info-cell-value">{{ course.delivery }}</div>
+  </div>
+  <div class="info-cell">
+    <div class="info-cell-label">Course Credit</div>
+    <div class="info-cell-value">{{ course.credit }}</div>
+  </div>
+  <div class="info-cell">
+    <div class="info-cell-label">Classroom</div>
+    <div class="info-cell-value">{{ course.classroom }}</div>
+  </div>
+</div>
+
+<div class="section-label">Course Overview & Learning Goals</div>
+<div class="section-btn-row">
+  {% for sec in sections %}
+    {% if sec.section_name in ['Prerequisites', 'Course Learning Outcomes', 'Course Objectives', 'Contribution to the Program'] %}
+      <a href="/course/{{ course.id }}/syllabus" class="section-btn">{{ sec.section_name }}</a>
+    {% endif %}
+  {% endfor %}
+</div>
+{% endblock %}

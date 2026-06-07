@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% set active_page = 'search' %}
+{% block content %}
+
+<style>
+.vs-header{
+  background:linear-gradient(135deg,#0D47A1 0%,#1565C0 100%);
+  border-radius:14px;
+  padding:20px 28px;
+  margin-bottom:16px;
+}
+.vs-header h2{
+  color:#fff;font-size:18px;font-weight:800;
+  letter-spacing:2px;text-transform:uppercase;
+  text-align:center;margin-bottom:16px;
+}
+.vs-search-row{display:flex;align-items:center;gap:12px;}
+.vs-search-label{
+  color:#90CAF9;font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:1px;white-space:nowrap;
+}
+.vs-search-input{
+  flex:1;background:rgba(255,255,255,.15);
+  border:1.5px solid rgba(255,255,255,.3);
+  border-radius:24px;padding:9px 18px;
+  font-size:13px;color:#fff;font-family:inherit;outline:none;
+  transition:border-color .2s,background .2s;
+}
+.vs-search-input::placeholder{color:rgba(255,255,255,.45);}
+.vs-search-input:focus{
+  border-color:rgba(255,255,255,.7);
+  background:rgba(255,255,255,.22);
+}
+.vs-search-btn{
+  background:rgba(255,255,255,.2);
+  border:1.5px solid rgba(255,255,255,.35);
+  border-radius:50%;width:36px;height:36px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:14px;color:#fff;
+  flex-shrink:0;
+}
+.vs-search-btn:hover{background:rgba(255,255,255,.35);}
+
+.dept-badge{
+  text-align:center;margin-bottom:14px;
+  font-size:12px;color:var(--subtext);
+}
+.dept-badge span{
+  background:var(--sky-pale);color:var(--navy-mid);
+  padding:4px 12px;border-radius:20px;font-weight:700;font-size:11px;
+}
+
+.ci-section{
+  background:linear-gradient(135deg,#1565C0 0%,#1A3A8A 100%);
+  border-radius:14px;padding:20px 24px;margin-bottom:16px;
+}
+.ci-title{
+  color:#fff;font-size:15px;font-weight:800;
+  letter-spacing:1.5px;text-transform:uppercase;
+  text-align:center;margin-bottom:16px;
+}
+.ci-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.ci-cell{
+  background:rgba(255,255,255,.92);border-radius:24px;
+  padding:12px 20px;font-size:13px;color:#0D1B4B;line-height:1.6;
+}
+.ci-cell strong{color:#0B2A6B;}
+
+.syllabus-sections{display:flex;flex-direction:column;gap:10px;padding-bottom:40px;}
+
+.empty-hint{
+  text-align:center;padding:60px 20px;
+  color:var(--subtext);font-size:14px;
+}
+.empty-hint .big{font-size:48px;margin-bottom:14px;}
+.empty-hint p{margin-top:6px;font-size:12px;color:#5C7BB8;}
+
+.not-found{
+  background:#FFEBEE;color:#C62828;
+  border-radius:10px;padding:16px 20px;
+  text-align:center;font-size:13px;font-weight:600;
+  margin-bottom:16px;
+}
+</style>
+
+<!-- HEADER + ARAMA -->
+<div class="vs-header">
+  <h2>Search Syllabus</h2>
+  <form method="GET" action="/syllabus/dept-search">
+    <div class="vs-search-row">
+      <span class="vs-search-label">Course Code / Name</span>
+      <input
+        class="vs-search-input"
+        type="text"
+        name="q"
+        value="{{ q if q else '' }}"
+        placeholder="Search all courses in your department..."
+        autofocus
+      >
+      <button type="submit" class="vs-search-btn">🔍</button>
+    </div>
+  </form>
+</div>
+
+{% if not q %}
+  <div class="empty-hint">
+    <div class="big">🔍</div>
+    Search all courses in your department.
+    <p>You can view syllabuses even if you're not enrolled.</p>
+  </div>
+
+{% elif not course %}
+  <div class="not-found">
+    No course found in your department matching "{{ q }}".
+  </div>
+
+{% else %}
+  <div class="dept-badge">Showing result from your department</div>
+
+  <div class="ci-section">
+    <div class="ci-title">Course Information</div>
+    <div class="ci-grid">
+      <div class="ci-cell"><strong>Course Name:</strong><br>{{ course.name }}</div>
+      <div class="ci-cell"><strong>Course Code:</strong> {{ course.code }}</div>
+      <div class="ci-cell"><strong>e-mail:</strong> {{ course.email }}</div>
+      <div class="ci-cell">
+        <strong>Office:</strong> {{ course.office }}<br>
+        <strong>Office Hours:</strong> {{ course.office_hours }}
+      </div>
+      <div class="ci-cell"><strong>Schedule:</strong> {{ course.schedule }}</div>
+      <div class="ci-cell"><strong>Classroom:</strong> {{ course.classroom }}</div>
+    </div>
+  </div>
+
+  <div class="syllabus-sections">
+    {% for sec in sections %}
+    <div class="sec-card">
+      <div class="sec-card-hdr">{{ sec.section_name }}</div>
+      <div class="sec-card-body">{{ sec.content }}</div>
+    </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% endblock %}

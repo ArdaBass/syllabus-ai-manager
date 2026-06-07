@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% set active_page = 'policies' %}
+{% block content %}
+
+<div class="page-hdr" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+  <div>
+    <h2>📜 Course Policies — {{ course.code }}</h2>
+    <p>{{ course.name }}</p>
+  </div>
+  {% if courses and courses|length > 1 %}
+  <div style="position:relative;">
+    <button onclick="toggleCourseMenu()" id="course-picker-btn"
+      style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.35);color:#fff;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap;"
+      aria-haspopup="true" aria-expanded="false">
+      📘 {{ course.code }} <span style="font-size:10px;opacity:.7;">▼</span>
+    </button>
+    <div id="course-menu"
+      style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 16px var(--shadow-strong);min-width:220px;z-index:50;overflow:hidden;">
+      {% for c in courses %}
+      <a href="/course/{{ c.id }}/policies"
+        style="display:block;padding:10px 16px;font-size:13px;text-decoration:none;color:{% if c.id == course.id %}var(--navy-mid){% else %}var(--text){% endif %};font-weight:{% if c.id == course.id %}700{% else %}400{% endif %};background:{% if c.id == course.id %}var(--sky-pale){% else %}transparent{% endif %};">
+        {% if c.id == course.id %}✓ {% endif %}{{ c.code }} — {{ c.name }}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}
+    <div class="flash {{ category }}" role="alert">{{ message }}</div>
+  {% endfor %}
+{% endwith %}
+
+<div class="form-card">
+  <form method="POST" action="/course/{{ course.id }}/policies">
+    <label for="policy-content">Policy Content</label>
+    <textarea id="policy-content" name="content" rows="14"
+      {% if user.role != 'instructor' %}readonly{% endif %}
+      style="font-size:13px;">{{ policy.content if policy else '' }}</textarea>
+    {% if user.role == 'instructor' %}
+    <button type="submit" class="btn btn-primary" style="margin-top:14px;">💾 Kaydet</button>
+    {% endif %}
+  </form>
+</div>
+
+<script>
+function toggleCourseMenu() {
+  const menu = document.getElementById('course-menu');
+  const btn  = document.getElementById('course-picker-btn');
+  const open = menu.style.display !== 'none';
+  menu.style.display = open ? 'none' : 'block';
+  btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+}
+document.addEventListener('click', function(e) {
+  const btn  = document.getElementById('course-picker-btn');
+  const menu = document.getElementById('course-menu');
+  if (menu && btn && !btn.contains(e.target) && !menu.contains(e.target)) {
+    menu.style.display = 'none';
+    btn.setAttribute('aria-expanded', 'false');
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+{% set active_page = 'edit' %}
+{% block content %}
+{% set REQUIRED = [
+  "course overview","prerequisites","course learning outcomes",
+  "course objectives","grading policy","weekly plan","course policies"
+] %}
+<style>
+.sticky-save{position:sticky;top:0;z-index:40;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 16px;margin:0 0 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 2px 8px var(--shadow);}
+.sec-hdr-actions{display:flex;gap:6px;align-items:center;}
+.btn-format{background:var(--navy-mid);color:#fff;font-size:11px;padding:4px 10px;border:none;border-radius:6px;cursor:pointer;}
+.btn-del{background:transparent;border:1px solid var(--border);color:var(--subtext);border-radius:6px;padding:4px 9px;font-size:11px;cursor:pointer;transition:all .15s;}
+.btn-del:hover{background:#FFEBEE;border-color:var(--red);color:var(--red);}
+.lock-badge{font-size:10px;color:var(--subtext);border:1px solid var(--border);border-radius:6px;padding:3px 8px;display:flex;align-items:center;gap:3px;}
+.sec-card.marked-delete{opacity:.4;outline:2px dashed var(--red);}
+.add-section-card{background:var(--sky-pale);border:1.5px dashed var(--border);border-radius:12px;padding:18px 20px;margin-top:20px;}
+.add-section-card h3{font-size:12px;font-weight:800;color:var(--navy-mid);margin-bottom:12px;letter-spacing:.4px;}
+</style>
+
+<div class="page-hdr">
+  <h2>✏️ Edit Syllabus — {{ course.code }}</h2>
+  <p>Zorunlu bölümler düzenlenebilir · Özel bölümler silinebilir · Yeni bölüm ekleyebilirsiniz</p>
+</div>
+
+<!-- AI Araçları -->
+<div style="background:var(--sky-pale);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:18px;">
+  <h3 style="font-size:12px;font-weight:800;letter-spacing:.6px;color:var(--navy-mid);margin-bottom:12px;">🤖 AI Syllabus Araçları</h3>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+    <button type="button" class="btn btn-primary btn-sm" onclick="checkSyllabus()" id="check-btn">
+      🔍 Eksik Bileşen Tespiti
+    </button>
+    <a href="/course/{{ course.id }}/syllabus/history" class="btn btn-sm"
+       style="background:var(--card);border:1.5px solid var(--border);color:var(--navy-mid);">🕓 Sürüm Geçmişi</a>
+    <span style="font-size:11px;color:var(--subtext);">Her bölümde ✨ AI ile Formatla butonu var.</span>
+  </div>
+  <div id="check-result" style="margin-top:12px;display:none;"></div>
+</div>
+
+<!-- Dosyadan AI ile doldur -->
+<div style="background:var(--card);border:1.5px dashed var(--navy-mid);border-radius:12px;padding:16px;margin-bottom:18px;">
+  <h3 style="font-size:12px;font-weight:800;letter-spacing:.6px;color:var(--navy-mid);margin-bottom:6px;">📄 Dosyadan Syllabus Oluştur</h3>
+  <p style="font-size:12px;color:var(--subtext);margin-bottom:12px;">
+    Mevcut syllabus dosyanızı (PDF, Word veya .txt) yükleyin. AI bölümleri ve teslim tarihlerini çıkarır, siz onaylayınca doldurur.
+  </p>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+    <input type="file" id="syllabus-file" accept=".pdf,.docx,.txt"
+      style="font-size:12px;color:var(--text);">
+    <button type="button" class="btn btn-primary btn-sm" onclick="extractSyllabus()" id="extract-btn">
+      ✨ AI ile Oku ve Çıkar
+    </button>
+  </div>
+  <div id="extract-status" style="margin-top:10px;display:none;font-size:12px;"></div>
+  <div id="extract-preview" style="margin-top:12px;display:none;"></div>
+</div>
+
+<form method="POST" action="/course/{{ course.id }}/edit" id="edit-form">
+
+  <!-- Sticky kaydet -->
+  <div class="sticky-save">
+    <button type="submit" class="btn btn-primary">💾 Kaydet</button>
+    <button type="button" class="btn btn-sm" onclick="toggleAddPanel()"
+      style="background:var(--sky-pale);border:1.5px solid var(--border);color:var(--navy-mid);"
+      id="add-toggle-btn" aria-expanded="false">➕ Yeni Bölüm</button>
+    <a href="/course/{{ course.id }}/syllabus" style="color:var(--subtext);text-decoration:none;font-size:13px;">İptal</a>
+    <span id="delete-warning" style="display:none;font-size:12px;font-weight:700;color:var(--red);">
+      ⚠️ Kırmızı çerçeveli bölümler silinecek — Kaydet ile onaylayın.
+    </span>
+  </div>
+
+  <!-- Yeni bölüm paneli (sticky bar'ın hemen altında) -->
+  <div id="add-panel" style="display:none;background:var(--sky-pale);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin:0 0 18px;">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+      <div style="flex:1;min-width:160px;">
+        <label style="display:block;font-size:10px;font-weight:700;color:var(--subtext);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Bölüm Başlığı</label>
+        <input type="text" id="new-sec-name" name="new_section_name"
+          placeholder="Örn: Ders Materyalleri, Referanslar..."
+          style="width:100%;background:var(--input-bg);border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;font-family:inherit;color:var(--text);outline:none;">
+      </div>
+      <div style="flex:2;min-width:200px;">
+        <label style="display:block;font-size:10px;font-weight:700;color:var(--subtext);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">İçerik</label>
+        <textarea id="new-sec-content" name="new_section_content" rows="2"
+          placeholder="İçeriği buraya yazın..."
+          style="width:100%;background:var(--input-bg);border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;font-family:inherit;color:var(--text);outline:none;resize:vertical;"></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm" style="flex-shrink:0;margin-bottom:2px;">💾 Ekle & Kaydet</button>
+    </div>
+  </div>
+
+  <!-- Bölümler -->
+  {% for sec in sections %}
+  {% set is_required = sec.section_name | lower in REQUIRED %}
+  <div class="sec-card" id="card-{{ sec.id }}">
+    <div class="sec-card-hdr">
+      <span>{{ sec.section_name }}</span>
+      <div class="sec-hdr-actions">
+        <button type="button" class="btn-format"
+          onclick="formatSection({{ sec.id }}, '{{ sec.section_name | replace("'","\\'")}}')"
+          aria-label="AI ile formatla">✨ AI ile Formatla</button>
+        {% if is_required %}
+          <span class="lock-badge" title="Bu bölüm zorunludur, silinemez">🔒 Zorunlu</span>
+        {% else %}
+          <button type="button" class="btn-del" onclick="markDelete({{ sec.id }})"
+            aria-label="Bölümü sil">🗑 Sil</button>
+        {% endif %}
+      </div>
+    </div>
+    <div class="sec-card-body">
+      <textarea
+        id="ta-{{ sec.id }}"
+        name="section_{{ sec.id }}"
+        rows="6"
+        aria-label="{{ sec.section_name }} içeriği"
+        style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;resize:vertical;background:var(--input-bg);box-sizing:border-box;color:var(--text);"
+      >{{ sec.content }}</textarea>
+      <div id="ai-msg-{{ sec.id }}" style="display:none;margin-top:6px;"></div>
+    </div>
+  </div>
+  {% endfor %}
+
+  <!-- Silme hidden inputs -->
+  <div id="delete-inputs"></div>
+
+</form>
+
+<script>
+function toggleAddPanel() {
+  const panel = document.getElementById('add-panel');
+  const btn   = document.getElementById('add-toggle-btn');
+  const open  = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'block';
+  btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+  if (!open) document.getElementById('new-sec-name').focus();
+}
+
+const toDelete = new Set();
+
+function markDelete(secId) {
+  const card = document.getElementById('card-' + secId);
+  if (toDelete.has(secId)) {
+    toDelete.delete(secId);
+    card.classList.remove('marked-delete');
+  } else {
+    toDelete.add(secId);
+    card.classList.add('marked-delete');
+  }
+  const container = document.getElementById('delete-inputs');
+  container.innerHTML = '';
+  toDelete.forEach(id => {
+    const inp = document.createElement('input');
+    inp.type = 'hidden'; inp.name = 'delete_section'; inp.value = id;
+    container.appendChild(inp);
+  });
+  document.getElementById('delete-warning').style.display = toDelete.size > 0 ? 'inline' : 'none';
+}
+
+async function formatSection(secId, sectionName) {
+  const ta  = document.getElementById('ta-' + secId);
+  const msg = document.getElementById('ai-msg-' + secId);
+  const content = ta.value.trim();
+  if (!content) { alert('İçerik boş, formatlanamaz.'); return; }
+  msg.style.display = 'block';
+  msg.innerHTML = '<span style="color:var(--subtext);font-size:12px;">⏳ AI formatlanıyor...</span>';
+  try {
+    const res = await fetch('/ai/format-section', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({section_name: sectionName, content: content})
+    });
+    const data = await res.json();
+    if (data.ok) {
+      ta.value = data.formatted;
+      msg.innerHTML = '<span style="color:var(--green);font-size:12px;">✅ Formatlandı — kaydetmek için 💾 Kaydet butonunu kullanın.</span>';
+    } else {
+      msg.innerHTML = '<span style="color:var(--red);font-size:12px;">Hata: ' + (data.error||'Bilinmeyen') + '</span>';
+    }
+  } catch(e) {
+    msg.innerHTML = '<span style="color:var(--red);font-size:12px;">Bağlantı hatası.</span>';
+  }
+}
+
+let extractedData = null;
+
+async function extractSyllabus() {
+  const fileInput = document.getElementById('syllabus-file');
+  const status  = document.getElementById('extract-status');
+  const preview = document.getElementById('extract-preview');
+  const btn = document.getElementById('extract-btn');
+  if (!fileInput.files || !fileInput.files[0]) {
+    alert('Önce bir dosya seçin (PDF, Word veya .txt).');
+    return;
+  }
+  const fd = new FormData();
+  fd.append('file', fileInput.files[0]);
+  btn.disabled = true; btn.textContent = '⏳ Okunuyor...';
+  status.style.display = 'block';
+  status.innerHTML = '<span style="color:var(--subtext);">Dosya okunuyor ve AI analiz ediyor, bu biraz sürebilir...</span>';
+  preview.style.display = 'none'; preview.innerHTML = '';
+  try {
+    const res = await fetch('/course/{{ course.id }}/syllabus/extract', { method:'POST', body: fd });
+    const data = await res.json();
+    if (data.ok) {
+      extractedData = { sections: data.sections || [], deadlines: data.deadlines || [] };
+      status.style.display = 'none';
+      renderPreview();
+    } else {
+      status.innerHTML = '<span style="color:var(--red);">Hata: ' + (data.error || 'Bilinmeyen') + '</span>';
+    }
+  } catch(e) {
+    status.innerHTML = '<span style="color:var(--red);">Bağlantı hatası.</span>';
+  }
+  btn.disabled = false; btn.textContent = '✨ AI ile Oku ve Çıkar';
+}
+
+function escapeHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function renderPreview() {
+  const preview = document.getElementById('extract-preview');
+  const secs = extractedData.sections, dls = extractedData.deadlines;
+  if (secs.length === 0 && dls.length === 0) {
+    preview.style.display = 'block';
+    preview.innerHTML = '<span style="color:#E65100;font-size:12px;">AI dosyadan tanınabilir bölüm veya tarih çıkaramadı.</span>';
+    return;
+  }
+  let html = '<div style="border-top:1px solid var(--border);padding-top:12px;">';
+  html += '<div style="font-size:12px;font-weight:800;color:var(--navy-mid);margin-bottom:8px;">🔍 AI Önizlemesi — onaylamadan kaydedilmez</div>';
+  if (secs.length) {
+    html += '<div style="font-size:11px;font-weight:700;color:var(--subtext);text-transform:uppercase;margin-bottom:6px;">Bölümler (' + secs.length + ')</div>';
+    secs.forEach(s => {
+      const preview_text = escapeHtml((s.content||'').slice(0,160)) + ((s.content||'').length>160 ? '…' : '');
+      html += '<div style="background:var(--sky-pale);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:6px;">'
+            + '<div style="font-size:12px;font-weight:700;color:var(--text);">' + escapeHtml(s.name) + '</div>'
+            + '<div style="font-size:11px;color:var(--subtext);margin-top:2px;">' + preview_text + '</div></div>';
+    });
+  }
+  if (dls.length) {
+    html += '<div style="font-size:11px;font-weight:700;color:var(--subtext);text-transform:uppercase;margin:10px 0 6px;">Teslim Tarihleri (' + dls.length + ')</div>';
+    dls.forEach(d => {
+      html += '<div style="font-size:12px;color:var(--text);padding:3px 0;">📅 <strong>' + escapeHtml(d.title) + '</strong> — ' + escapeHtml(d.date) + '</div>';
+    });
+  }
+  html += '<div style="display:flex;gap:10px;margin-top:14px;">'
+        + '<button type="button" class="btn btn-primary btn-sm" onclick="applyExtracted()" id="apply-btn">✓ Onayla ve Doldur</button>'
+        + '<button type="button" class="btn btn-sm" onclick="cancelExtract()" style="background:var(--card);border:1.5px solid var(--border);color:var(--subtext);">İptal</button>'
+        + '</div></div>';
+  preview.style.display = 'block';
+  preview.innerHTML = html;
+}
+
+function cancelExtract() {
+  extractedData = null;
+  document.getElementById('extract-preview').style.display = 'none';
+  document.getElementById('extract-preview').innerHTML = '';
+}
+
+async function applyExtracted() {
+  if (!extractedData) return;
+  const btn = document.getElementById('apply-btn');
+  btn.disabled = true; btn.textContent = '⏳ Kaydediliyor...';
+  try {
+    const res = await fetch('/course/{{ course.id }}/syllabus/apply-extracted', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(extractedData)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      alert('✅ ' + data.sections + ' bölüm ve ' + data.deadlines + ' teslim tarihi kaydedildi. Sayfa yenileniyor.');
+      location.reload();
+    } else {
+      alert('Hata: ' + (data.error || 'Bilinmeyen'));
+      btn.disabled = false; btn.textContent = '✓ Onayla ve Doldur';
+    }
+  } catch(e) {
+    alert('Bağlantı hatası.');
+    btn.disabled = false; btn.textContent = '✓ Onayla ve Doldur';
+  }
+}
+
+async function checkSyllabus() {
+  const btn = document.getElementById('check-btn');
+  const res_div = document.getElementById('check-result');
+  btn.disabled = true; btn.textContent = '⏳ Kontrol ediliyor...';
+  res_div.style.display = 'block';
+  res_div.innerHTML = '<span style="color:var(--subtext);font-size:12px;">AI analiz yapıyor...</span>';
+  try {
+    const res = await fetch('/course/{{ course.id }}/ai/check-syllabus');
+    const data = await res.json();
+    if (data.ok) {
+      let html = '';
+      const hasMissing = data.missing && data.missing.length > 0;
+      const hasWeak    = data.weak    && data.weak.length    > 0;
+      if (!hasMissing && !hasWeak) {
+        html = '<span style="color:var(--green);font-size:13px;font-weight:700;">✅ Syllabus eksiksiz görünüyor!</span>';
+      } else {
+        if (hasMissing) {
+          html += '<div style="margin-bottom:8px;"><strong style="color:var(--red);font-size:12px;">❌ Eksik bölümler:</strong><ul style="margin:4px 0 0 16px;font-size:12px;">';
+          data.missing.forEach(m => { html += '<li>' + m + '</li>'; });
+          html += '</ul></div>';
+        }
+        if (hasWeak) {
+          html += '<div><strong style="color:#E65100;font-size:12px;">⚠️ İçeriği çok kısa bölümler:</strong><ul style="margin:4px 0 0 16px;font-size:12px;">';
+          data.weak.forEach(w => { html += '<li>' + w + '</li>'; });
+          html += '</ul></div>';
+        }
+      }
+      res_div.innerHTML = html;
+    } else {
+      res_div.innerHTML = '<span style="color:var(--red);font-size:12px;">Hata: ' + (data.error||'') + '</span>';
+    }
+  } catch(e) {
+    res_div.innerHTML = '<span style="color:var(--red);font-size:12px;">Bağlantı hatası.</span>';
+  }
+  btn.disabled = false; btn.textContent = '🔍 Eksik Bileşen Tespiti';
+}
+</script>
+{% endblock %}

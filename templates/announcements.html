@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% set active_page = 'announcements' %}
+{% block content %}
+<div class="page-hdr"><h2>{% if user.role == 'instructor' %}Post Announcement{% else %}Announcements{% endif %}</h2></div>
+
+{% if user.role == 'instructor' %}
+<div class="form-card">
+  <form method="POST">
+    <label for="ann-course">Course</label>
+    <select id="ann-course" name="target_course_id" required
+            onchange="location.href='/course/'+this.value+'/announcements'">
+      {% for c in courses %}
+      <option value="{{ c.id }}" {% if c.id == course.id %}selected{% endif %}>{{ c.code }} — {{ c.name }}</option>
+      {% endfor %}
+    </select>
+    <label>Title</label>
+    <input type="text" name="title" placeholder="Announcement title" required>
+    <label>Message</label>
+    <textarea name="body" rows="4" placeholder="Write your announcement here..." required></textarea>
+    <button type="submit" class="btn btn-primary" style="margin-top:12px;">📢 Post Announcement</button>
+  </form>
+</div>
+{% endif %}
+
+{% if user.role == 'student' and courses|length > 1 %}
+<div class="form-card" style="padding:14px 16px;">
+  <label for="stu-course">Course</label>
+  <select id="stu-course"
+          onchange="location.href='/course/'+this.value+'/announcements'">
+    {% for c in courses %}
+    <option value="{{ c.id }}" {% if c.id == course.id %}selected{% endif %}>{{ c.code }} — {{ c.name }}</option>
+    {% endfor %}
+  </select>
+</div>
+{% endif %}
+
+<div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--subtext);margin:18px 4px 10px;">
+  {{ course.code }} — Announcements
+</div>
+
+{% if announcements %}
+  {% for a in announcements %}
+  <div class="announce-card">
+    <div class="announce-title">{{ a.title }}</div>
+    <div class="announce-body">{{ a.body }}</div>
+    <div class="announce-meta">
+      <span class="announce-date">{{ a.created_at }}</span>
+      {% if user.role == 'instructor' %}
+      <form method="POST" action="/course/{{ course.id }}/announcements/{{ a.id }}/delete">
+        <button type="submit" class="btn btn-danger">🗑</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="empty-state"><div class="big">📢</div>No announcements yet.</div>
+{% endif %}
+{% endblock %}

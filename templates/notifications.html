@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% set active_page = 'notifications' %}
+{% block content %}
+<div class="page-hdr">
+  <h2>🔔 Bildirimler</h2>
+  <p>Syllabus değişiklikleri, yeni duyurular ve deadline hatırlatıcılar</p>
+</div>
+
+{% if notifications %}
+<div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+  <form method="POST" action="/notifications/read-all">
+    <button type="submit" class="btn btn-sm" style="background:var(--card);border:1.5px solid var(--border);color:var(--navy-mid);">
+      ✅ Tümünü Okundu İşaretle
+    </button>
+  </form>
+</div>
+{% for n in notifications %}
+<div style="background:var(--card);border:1px solid {% if not n.is_read %}var(--navy-mid){% else %}var(--border){% endif %};border-left:4px solid {% if n.notif_type=='announcement' %}var(--sky){% elif n.notif_type=='deadline' %}var(--red){% elif n.notif_type=='syllabus_change' %}var(--green){% else %}var(--navy-mid){% endif %};border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 1px 4px var(--shadow);">
+  <div style="flex:1;">
+    <div style="font-size:13px;font-weight:{% if not n.is_read %}700{% else %}400{% endif %};color:var(--text);">{{ n.message }}</div>
+    <div style="font-size:10px;color:var(--subtext);margin-top:4px;">{{ n.code }} · {{ n.created_at[:16] if n.created_at else '' }}</div>
+  </div>
+  {% if not n.is_read %}
+  <form method="POST" action="/notifications/{{ n.id }}/read">
+    <button type="submit" class="btn btn-sm" style="font-size:11px;background:var(--sky-pale);color:var(--navy-mid);border:1px solid var(--border);" aria-label="Okundu olarak işaretle">Okundu</button>
+  </form>
+  {% else %}
+  <span style="font-size:10px;color:var(--subtext);">✓ Okundu</span>
+  {% endif %}
+</div>
+{% endfor %}
+{% else %}
+<div class="empty-state">
+  <div class="big">🔔</div>
+  Henüz bildirim yok.
+</div>
+{% endif %}
+{% endblock %}

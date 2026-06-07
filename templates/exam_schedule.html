@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% set active_page = 'exam_schedule' %}
+{% block content %}
+
+<div class="page-hdr">
+  <h2>📝 Exam Schedule</h2>
+  <p>Midterm and final exam dates</p>
+</div>
+
+{% if exams %}
+  {% for e in exams %}
+  <div class="deadline-card">
+    <div class="deadline-accent"></div>
+    <div class="deadline-body">
+      <div class="deadline-title">{{ e.title }}</div>
+      <div class="deadline-date">📚 {{ e.code }} — {{ e.name }}</div>
+      <div class="deadline-date">📅 {{ e.due_date }}</div>
+    </div>
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="empty-state"><div class="big">📝</div>No exam dates found.</div>
+{% endif %}
+
+{% endblock %}

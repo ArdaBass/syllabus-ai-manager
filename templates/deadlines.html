@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% set active_page = 'deadlines' %}
+{% block content %}
+<style>
+.prog-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:16px;box-shadow:0 1px 4px var(--shadow);}
+.prog-top{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;}
+.prog-top .lbl{color:var(--subtext);text-transform:uppercase;letter-spacing:.5px;font-size:10px;}
+.prog-track{height:10px;background:var(--sky-pale);border-radius:8px;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--sky),var(--navy-mid));border-radius:8px;transition:width .4s ease;}
+.check-btn{width:30px;height:30px;border-radius:8px;border:2px solid var(--border);background:var(--card);color:#fff;font-size:15px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.check-btn.checked{background:var(--green);border-color:var(--green);}
+.check-btn:hover{border-color:var(--navy-mid);}
+.deadline-card.done .deadline-title{text-decoration:line-through;color:var(--subtext);}
+.deadline-card.done .deadline-accent{background:var(--green);}
+</style>
+
+<div class="page-hdr">
+  <h2>
+    {% if filter_type == 'exams' %}
+      Exam Schedule
+    {% elif user.role == 'instructor' %}
+      Update Deadlines
+    {% else %}
+      Upcoming Deadlines
+    {% endif %}
+  </h2>
+</div>
+
+{% if user.role == 'instructor' %}
+<div class="form-card">
+  <form method="POST">
+    <label for="dl-title">Deadline Title</label>
+    <input id="dl-title" type="text" name="title" placeholder="e.g. Midterm Exam" required aria-required="true">
+    <label for="dl-date">Due Date</label>
+    <input id="dl-date" type="date" name="due_date" required aria-required="true">
+    <button type="submit" class="btn btn-primary" style="margin-top:12px;">+ Add Deadline</button>
+  </form>
+</div>
+
+<!-- AI Deadline Çıkarımı -->
+<div style="background:var(--sky-pale);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:18px;">
+  <h3 style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--navy-mid);margin-bottom:8px;">🤖 AI ile Deadline Çıkarımı</h3>
+  <p style="font-size:12px;color:var(--subtext);margin-bottom:8px;">Syllabus metnini veya bir açıklamayı yapıştırın; AI tarihleri otomatik çıkarsın.</p>
+  <textarea id="extract-text" rows="5" placeholder="Örn: 'Midterm sınavı 14 Nisan 2026, Final 25 Mayıs 2026...'"
+    style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;background:var(--input-bg);color:var(--text);"
+    aria-label="Deadline çıkarımı için metin girin"></textarea>
+  <button type="button" class="btn btn-sm" onclick="extractDeadlines()" style="margin-top:8px;background:var(--navy-mid);color:#fff;" id="extract-btn">
+    ✨ Tarihleri Çıkar
+  </button>
+  <div id="extract-result" style="margin-top:10px;display:none;"></div>
+</div>
+{% endif %}
+
+{% if progress and progress.total %}
+<div class="prog-card">
+  <div class="prog-top">
+    <span class="lbl">Your progress</span>
+    <span>{{ progress.done }} / {{ progress.total }} done · {{ progress.pct }}%</span>
+  </div>
+  <div class="prog-track"><div class="prog-fill" style="width:{{ progress.pct }}%;"></div></div>
+</div>
+{% endif %}
+
+{% if deadlines %}
+  <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+    <a href="/course/{{ course.id }}/deadlines.ics" class="btn btn-sm" style="background:var(--green);color:#fff;">📅 Export to Calendar (.ics)</a>
+  </div>
+  {% for d in deadlines %}
+  <div class="deadline-card {% if d.done %}done{% endif %}">
+    <div class="deadline-accent"></div>
+    <div class="deadline-body">
+      <div class="deadline-title">{{ d.title }}</div>
+      <div class="deadline-date">📅 Due: {{ d.due_date }}</div>
+    </div>
+    {% if user.role == 'instructor' %}
+    <div class="deadline-actions">
+      <form method="POST" action="/course/{{ course.id }}/deadlines/{{ d.id }}/delete">
+        <button type="submit" class="btn btn-danger">🗑</button>
+      </form>
+    </div>
+    {% else %}
+    <div class="deadline-actions">
+      <form method="POST" action="/course/{{ course.id }}/deadlines/{{ d.id }}/toggle">
+        <button type="submit" class="check-btn {% if d.done %}checked{% endif %}" title="{{ 'Mark as not done' if d.done else 'Mark as done' }}">{% if d.done %}✓{% endif %}</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="empty-state"><div class="big">📅</div>No deadlines set yet.</div>
+{% endif %}
+
+{% if user.role == 'instructor' %}
+<script>
+async function extractDeadlines() {
+  const text = document.getElementById('extract-text').value.trim();
+  const btn = document.getElementById('extract-btn');
+  const res_div = document.getElementById('extract-result');
+  if (!text) { alert('Lütfen metin girin.'); return; }
+  btn.disabled = true;
+  btn.textContent = '⏳ İşleniyor...';
+  res_div.style.display = 'block';
+  res_div.innerHTML = '<span style="font-size:12px;color:var(--subtext);">AI analiz ediyor...</span>';
+  try {
+    const res = await fetch('/ai/extract-deadlines', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({text: text})
+    });
+    const data = await res.json();
+    if (data.ok && data.deadlines.length > 0) {
+      let html = '<p style="font-size:12px;font-weight:700;color:var(--navy-mid);margin-bottom:8px;">Bulunan tarihler — forma aktarmak için tıklayın:</p>';
+      html += '<div style="display:flex;flex-direction:column;gap:6px;">';
+      data.deadlines.forEach(d => {
+        html += `<button type="button" onclick="fillForm('${d.title}','${d.date}')"
+          style="text-align:left;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer;">
+          📅 <strong>${d.title}</strong> — ${d.date}
+        </button>`;
+      });
+      html += '</div>';
+      res_div.innerHTML = html;
+    } else if (data.ok) {
+      res_div.innerHTML = '<span style="font-size:12px;color:var(--subtext);">Hiç tarih bulunamadı.</span>';
+    } else {
+      res_div.innerHTML = '<span style="font-size:12px;color:var(--red);">Hata: ' + (data.error || '') + '</span>';
+    }
+  } catch(e) {
+    res_div.innerHTML = '<span style="font-size:12px;color:var(--red);">Bağlantı hatası.</span>';
+  }
+  btn.disabled = false;
+  btn.textContent = '✨ Tarihleri Çıkar';
+}
+function fillForm(title, date) {
+  document.getElementById('dl-title').value = title;
+  document.getElementById('dl-date').value = date;
+  document.getElementById('dl-title').focus();
+}
+</script>
+{% endif %}
+{% endblock %}

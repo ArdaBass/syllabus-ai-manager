@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% set active_page = 'analytics' %}
+{% block content %}
+<style>
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;box-shadow:0 1px 4px var(--shadow);}
+.stat-num{font-size:28px;font-weight:800;color:var(--navy-mid);}
+.stat-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--subtext);margin-top:4px;}
+.event-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border);font-size:12px;}
+.event-row:last-child{border-bottom:none;}
+.bar-wrap{background:var(--sky-pale);border-radius:8px;height:8px;flex:1;margin:0 10px;overflow:hidden;}
+.bar-fill{height:100%;background:var(--navy-mid);border-radius:8px;}
+</style>
+
+<div class="page-hdr">
+  <h2>📈 Sistem Analitiği</h2>
+  <p>Kullanım sıklığı, özellik kullanımı ve etkileşim verileri</p>
+</div>
+
+{% set total_events = events | sum(attribute='cnt') if events else 0 %}
+<div class="stat-grid" role="list" aria-label="Özet istatistikler">
+  <div class="stat-card" role="listitem">
+    <div class="stat-num" aria-label="Toplam olay sayısı">{{ total_events }}</div>
+    <div class="stat-lbl">Toplam Olay</div>
+  </div>
+  <div class="stat-card" role="listitem">
+    <div class="stat-num" aria-label="Farklı olay türü sayısı">{{ events | map(attribute='event_type') | list | unique | list | length }}</div>
+    <div class="stat-lbl">Olay Türü</div>
+  </div>
+  <div class="stat-card" role="listitem">
+    <div class="stat-num" aria-label="Son işlem sayısı">{{ recent | length }}</div>
+    <div class="stat-lbl">Son 50 İşlem</div>
+  </div>
+</div>
+
+{% if events %}
+<div class="sec-card" style="margin-bottom:18px;">
+  <div class="sec-card-hdr">Özellik Kullanım Sıklığı (Ders Bazlı)</div>
+  <div style="padding:4px 0;">
+    {% set max_cnt = events | map(attribute='cnt') | max %}
+    {% for e in events %}
+    <div class="event-row">
+      <span style="min-width:160px;color:var(--text);">{{ e.event_type }}</span>
+      <div class="bar-wrap" role="img" aria-label="{{ e.event_type }}: {{ e.cnt }} olay">
+        <div class="bar-fill" style="width:{{ [e.cnt / max_cnt * 100, 100] | min | round | int }}%;"></div>
+      </div>
+      <span style="font-weight:700;min-width:30px;text-align:right;color:var(--navy-mid);">{{ e.cnt }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% if recent %}
+<div class="sec-card">
+  <div class="sec-card-hdr">Son Kullanım Kayıtları</div>
+  <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;" role="table" aria-label="Son kullanım kayıtları">
+      <thead>
+        <tr style="background:var(--sky-pale);">
+          <th style="padding:8px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--navy-mid);" scope="col">Kullanıcı</th>
+          <th style="padding:8px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--navy-mid);" scope="col">Olay</th>
+          <th style="padding:8px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--navy-mid);" scope="col">Sayfa</th>
+          <th style="padding:8px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--navy-mid);" scope="col">Zaman</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in recent %}
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:8px 12px;color:var(--text);">{{ r.username }}</td>
+          <td style="padding:8px 12px;color:var(--navy-mid);font-weight:600;">{{ r.event_type }}</td>
+          <td style="padding:8px 12px;color:var(--subtext);">{{ r.page or '—' }}</td>
+          <td style="padding:8px 12px;color:var(--subtext);">{{ r.created_at[:16] if r.created_at else '' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="empty-state"><div class="big">📈</div>Henüz yeterli veri yok.</div>
+{% endif %}
+{% endblock %}

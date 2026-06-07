@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% set active_page = 'policies' %}
+{% block content %}
+
+<div class="page-hdr">
+  <h2>📜 Course Policies</h2>
+  <p>Policies for your enrolled courses</p>
+</div>
+
+{% for p in all_course_policies %}
+<div class="sec-card">
+  <div class="sec-card-hdr">{{ p.code }} — {{ p.name }}</div>
+  <div class="sec-card-body">{{ p.content }}</div>
+</div>
+{% endfor %}
+
+{% endblock %}

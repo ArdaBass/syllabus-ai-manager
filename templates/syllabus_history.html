@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% set active_page = 'history' %}
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}
+    <div class="flash {{ category }}" role="alert">{{ message }}</div>
+  {% endfor %}
+{% endwith %}
+<div class="page-hdr">
+  <h2>🕓 Sürüm Geçmişi — {{ course.code }}</h2>
+  <p>Syllabus bölümlerindeki değişikliklerin geçmişi</p>
+</div>
+
+<div style="margin-bottom:14px;">
+  <a href="/course/{{ course.id }}/edit" class="btn btn-sm" style="background:var(--card);border:1.5px solid var(--border);color:var(--navy-mid);">← Düzenlemeye Dön</a>
+</div>
+
+{% if history %}
+{% set sections_seen = [] %}
+{% for h in history %}
+  {% if h.section_name not in sections_seen %}
+    {% set _ = sections_seen.append(h.section_name) %}
+    <div class="sec-card" style="margin-bottom:14px;">
+      <div class="sec-card-hdr">{{ h.section_name }}</div>
+      <div style="padding:4px 0;">
+        {% for entry in history if entry.section_name == h.section_name %}
+        <div style="border-bottom:1px solid var(--border);padding:12px 16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div style="font-size:11px;color:var(--subtext);">
+              {{ entry.changed_at[:16] if entry.changed_at else '' }} · {{ entry.username }}
+            </div>
+            <form method="POST" action="/course/{{ course.id }}/syllabus/section/{{ entry.section_id }}/restore">
+              <input type="hidden" name="hist_id" value="{{ entry.id }}">
+              <button type="submit" class="btn btn-sm"
+                style="font-size:11px;background:var(--sky-pale);color:var(--navy-mid);border:1px solid var(--border);"
+                aria-label="Bu sürüme geri dön"
+                onclick="return confirm('Bu sürüme geri dönmek istiyor musunuz?')">
+                ↩️ Geri Yükle
+              </button>
+            </form>
+          </div>
+          <pre style="font-size:12px;color:var(--text);line-height:1.6;white-space:pre-wrap;background:var(--sky-pale);border-radius:6px;padding:10px;max-height:140px;overflow-y:auto;">{{ entry.content or '(boş)' }}</pre>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+{% endfor %}
+{% else %}
+<div class="empty-state">
+  <div class="big">🕓</div>
+  Henüz değişiklik kaydı yok. İlk kaydet işleminizden sonra burada görünür.
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% set active_page = 'ai' %}
+{% block content %}
+<div class="page-hdr">
+  <h2>🤖 AI Syllabus Assistant</h2>
+  <p>{% if user.role == 'instructor' %}Get help reviewing, improving and planning your syllabi{% else %}Responses are limited to official syllabus content{% endif %}</p>
+</div>
+
+<div class="chat-toolbar">
+  <span style="font-size:11px;font-weight:700;color:var(--subtext);text-transform:uppercase;letter-spacing:.5px;">
+    {% if user.role == 'instructor' %}Review &amp; improve your syllabi{% else %}Ask about your courses{% endif %}
+  </span>
+  <button class="icon-btn" onclick="clearChat()">🗑 Clear chat</button>
+</div>
+
+<div class="chat-suggestions" id="suggestions">
+  {% if user.role == 'instructor' %}
+  <button class="chip" onclick="askChip(this)">Is anything missing or contradictory in my syllabus?</button>
+  <button class="chip" onclick="askChip(this)">What are students most likely to be confused about?</button>
+  <button class="chip" onclick="askChip(this)">Are my deadlines spread out evenly this term?</button>
+  <button class="chip" onclick="askChip(this)">Draft an academic integrity policy</button>
+  {% else %}
+  <button class="chip" onclick="askChip(this)">When is my next exam?</button>
+  <button class="chip" onclick="askChip(this)">What are the upcoming deadlines?</button>
+  <button class="chip" onclick="askChip(this)">Summarize the grading policy</button>
+  <button class="chip" onclick="askChip(this)">What is the weekly plan?</button>
+  {% endif %}
+</div>
+
+<div class="chat-wrap">
+  <div class="chat-window" id="chat-window">
+    <div class="bubble-wrap bot">
+      <div class="bubble-label">🤖 Assistant</div>
+      <div class="bubble bot">{% if user.role == 'instructor' %}Hello! I can help you review your syllabus for gaps, see it from a student's perspective, check your workload distribution, or draft new sections. What would you like to do?{% else %}Hello! What would you like to know about your course?{% endif %}</div>
+    </div>
+  </div>
+  <div class="chat-input-bar">
+    <input type="text" id="chat-input" placeholder="Ask anything about your course..." onkeypress="if(event.key==='Enter') sendMsg()" autofocus>
+    <button class="btn-send" id="send-btn" onclick="sendMsg()">➤</button>
+  </div>
+</div>
+
+<!-- Markdown rendering + sanitization (loaded from CDN at runtime; graceful fallback if offline) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.9/purify.min.js"></script>
+<script>
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function renderMarkdown(text){
+  // Prefer marked + DOMPurify; fall back to safe escaped text if CDN didn't load.
+  try{
+    if(window.marked && window.DOMPurify){
+      var raw = window.marked.parse(text, {breaks:true});
+      return window.DOMPurify.sanitize(raw);
+    }
+  }catch(e){}
+  return escapeHtml(text).replace(/\n/g,'<br>');
+}
+
+function appendMsg(role, text){
+  const win = document.getElementById('chat-window');
+  const wrap = document.createElement('div');
+  wrap.className = 'bubble-wrap ' + role;
+  const label = document.createElement('div');
+  label.className = 'bubble-label';
+  label.textContent = role === 'user' ? 'You' : '🤖 Assistant';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble ' + role;
+  if(role === 'bot'){
+    bubble.innerHTML = renderMarkdown(text);
+  }else{
+    bubble.textContent = text;
+  }
+  wrap.appendChild(label);
+  wrap.appendChild(bubble);
+  if(role === 'bot'){
+    const actions = document.createElement('div');
+    actions.className = 'msg-actions';
+    const copy = document.createElement('button');
+    copy.className = 'copy-btn';
+    copy.textContent = '⧉ Copy';
+    copy.onclick = function(){
+      navigator.clipboard.writeText(text).then(function(){
+        copy.textContent = '✓ Copied';
+        setTimeout(function(){ copy.textContent = '⧉ Copy'; }, 1500);
+      }).catch(function(){});
+    };
+    actions.appendChild(copy);
+    wrap.appendChild(actions);
+  }
+  win.appendChild(wrap);
+  win.scrollTop = win.scrollHeight;
+  return wrap;
+}
+
+function showTyping(){
+  const win = document.getElementById('chat-window');
+  const wrap = document.createElement('div');
+  wrap.className = 'bubble-wrap bot';
+  wrap.id = 'typing-indicator';
+  wrap.innerHTML = '<div class="bubble-label">🤖 Assistant</div>' +
+    '<div class="bubble bot"><span class="typing-dots"><span></span><span></span><span></span></span></div>';
+  win.appendChild(wrap);
+  win.scrollTop = win.scrollHeight;
+  return wrap;
+}
+
+async function sendMsg(){
+  const input = document.getElementById('chat-input');
+  const btn = document.getElementById('send-btn');
+  const q = input.value.trim();
+  if(!q) return;
+  input.value = '';
+  btn.disabled = true;
+  appendMsg('user', q);
+  const typing = showTyping();
+  try{
+    const res = await fetch('/ai/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: q })
+    });
+    const data = await res.json();
+    typing.remove();
+    appendMsg('bot', data.answer);
+  }catch(e){
+    typing.remove();
+    appendMsg('bot', 'Connection error. Please try again.');
+  }finally{
+    btn.disabled = false;
+    input.focus();
+  }
+}
+
+function askChip(el){
+  document.getElementById('chat-input').value = el.textContent;
+  sendMsg();
+}
+
+function clearChat(){
+  const win = document.getElementById('chat-window');
+  win.innerHTML = '<div class="bubble-wrap bot">' +
+    '<div class="bubble-label">🤖 Assistant</div>' +
+    '<div class="bubble bot">Hello! What would you like to know about your course?</div></div>';
+  // also reset the server-side history for this session
+  fetch('/ai', { method: 'GET' }).catch(function(){});
+}
+</script>
+{% endblock %}

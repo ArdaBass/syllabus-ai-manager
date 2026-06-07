@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>BAU – Login</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  font-family:'Segoe UI',system-ui,sans-serif;
+  background:#073A78;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:0;
+  margin:0;
+}
+
+.screen{
+  width:100%;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  gap:34px;
+}
+.platform-widget{
+  background:#1D70B8;
+  color:#8ED4FF;
+  font-size:16px;
+  font-weight:500;
+  padding:18px 42px;
+  border-radius:0 0 22px 22px;
+  box-shadow:0 12px 28px rgba(0,0,0,.18);
+  text-align:center;
+  min-width:280px;
+  margin-top:0;
+}
+
+.login-wrapper{
+  width:100%;
+  max-width:470px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  flex:1;
+  justify-content:center;
+}
+.tabs{
+  display:flex;
+  width:320px;
+  height:48px;
+  margin-bottom:-1px;
+  z-index:2;
+}
+
+.tab-btn{
+  flex:1;
+  border:none;
+  font-family:inherit;
+  font-size:16px;
+  font-weight:600;
+  cursor:pointer;
+  color:#fff;
+  background:#1565C0;
+  transition:.2s;
+}
+
+.tab-btn.student{
+  border-radius:22px 0 0 0;
+}
+
+.tab-btn.instructor{
+  border-radius:0 22px 0 0;
+}
+
+.tab-btn.active{
+  background:#78C8F4;
+  color:#fff;
+}
+
+.login-card{
+  width:100%;
+  max-width:440px;
+  background:linear-gradient(180deg,#74C9F6 0%,#317AD9 48%,#06265E 100%);
+  border-radius:22px;
+  padding:24px 70px 38px;
+  box-shadow:0 18px 38px rgba(0,0,0,.32);
+  text-align:center;
+}
+
+.logo-area{
+  margin-bottom:10px;
+}
+
+.bau-logo{
+  width:145px;
+  height:auto;
+  display:block;
+  margin:0 auto 8px;
+}
+
+.login-label{
+  color:#fff;
+  font-size:15px;
+  font-weight:500;
+  margin-bottom:12px;
+}
+
+.field{
+  margin-bottom:14px;
+}
+
+.field input{
+  width:100%;
+  height:36px;
+  border:none;
+  border-radius:20px;
+  background:#F7F7F7;
+  padding:0 18px;
+  font-size:14px;
+  font-family:inherit;
+  outline:none;
+  color:#0B2A6B;
+}
+
+.field input::placeholder{
+  color:#B4B4B4;
+}
+
+.btn-login{
+  width:100%;
+  height:36px;
+  border:none;
+  border-radius:20px;
+  background:#fff;
+  color:#0B2A6B;
+  font-size:14px;
+  font-weight:800;
+  cursor:pointer;
+  margin-top:4px;
+  font-family:inherit;
+}
+
+.btn-login:hover{
+  background:#EAF4FB;
+}
+
+.error{
+  background:rgba(255,255,255,.18);
+  color:#fff;
+  border-radius:8px;
+  padding:9px 12px;
+  font-size:12px;
+  font-weight:600;
+  margin-top:12px;
+}
+
+.hint{
+  text-align:center;
+  font-size:11px;
+  color:rgba(255,255,255,.65);
+  margin-top:16px;
+}
+
+@media(max-width:520px){
+  body{
+    padding:16px;
+  }
+
+  .screen{
+    gap:28px;
+  }
+
+  .platform-widget{
+    width:80%;
+    min-width:0;
+    padding:15px 20px;
+    font-size:14px;
+    border-radius:0 0 20px 20px;
+  }
+
+  .tabs{
+    width:72%;
+    height:46px;
+  }
+
+  .tab-btn{
+    font-size:14px;
+  }
+
+  .login-card{
+    padding:24px 38px 34px;
+  }
+
+  .bau-logo{
+    width:125px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="screen">
+
+  <div class="platform-widget">
+    Course Syllabus Platform
+  </div>
+
+  <div class="login-wrapper">
+
+    <div class="tabs">
+      <button class="tab-btn student active" id="tab-student" onclick="selectRole('student')">Student</button>
+      <button class="tab-btn instructor" id="tab-instructor" onclick="selectRole('instructor')">Instructor</button>
+    </div>
+
+    <div class="login-card">
+      <div class="logo-area">
+        <img src="{{ url_for('static', filename='bau_logo.png') }}"
+             alt="Bahçeşehir University Logo"
+             class="bau-logo">
+      </div>
+
+      <p class="login-label">Login</p>
+
+      <form method="POST">
+        <input type="hidden" id="role-input" name="selected_role" value="student">
+
+        <div class="field">
+          <input type="text" name="username" placeholder="Username" required autofocus>
+        </div>
+
+        <div class="field">
+          <input type="password" name="password" placeholder="Password" required>
+        </div>
+
+        <button type="submit" class="btn-login">LOGIN</button>
+      </form>
+
+      {% if error %}
+        <div class="error">{{ error }}</div>
+      {% endif %}
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+function selectRole(role) {
+  document.getElementById('role-input').value = role;
+
+  const studentTab = document.getElementById('tab-student');
+  const instructorTab = document.getElementById('tab-instructor');
+
+  if (role === 'student') {
+    studentTab.classList.add('active');
+    instructorTab.classList.remove('active');
+  } else {
+    instructorTab.classList.add('active');
+    studentTab.classList.remove('active');
+  }
+}
+</script>
+
+</body>
+</html>

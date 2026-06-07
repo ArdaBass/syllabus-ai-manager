@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% set active_page = 'calendar' %}
+{% block content %}
+<style>
+.cal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+.cal-title{font-size:18px;font-weight:800;color:var(--text);letter-spacing:.5px;}
+.cal-nav{display:flex;gap:8px;align-items:center;}
+.cal-nav a{background:var(--card);border:1px solid var(--border);color:var(--navy-mid);border-radius:8px;padding:7px 12px;font-size:13px;font-weight:700;text-decoration:none;transition:all .15s;}
+.cal-nav a:hover{background:var(--navy-mid);color:#fff;border-color:var(--navy-mid);}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+.cal-dow{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--subtext);text-align:center;padding:4px 0;}
+.cal-cell{background:var(--card);border:1px solid var(--border);border-radius:10px;min-height:96px;padding:6px 7px;display:flex;flex-direction:column;gap:3px;overflow:hidden;}
+.cal-cell.blank{background:transparent;border:none;}
+.cal-cell.today{border:2px solid var(--navy-mid);box-shadow:0 0 0 2px var(--sky-pale);}
+.cal-daynum{font-size:11px;font-weight:700;color:var(--subtext);align-self:flex-end;}
+.cal-cell.today .cal-daynum{color:var(--navy-mid);}
+.cal-event{font-size:9.5px;font-weight:700;color:#fff;border-radius:5px;padding:3px 5px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cal-event.exam{background:var(--red);}
+.cal-event.task{background:var(--navy-mid);}
+.cal-event .ec{opacity:.8;font-weight:800;}
+.cal-legend{display:flex;gap:16px;font-size:11px;color:var(--subtext);margin-top:14px;}
+.cal-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:middle;}
+@media(max-width:760px){.cal-cell{min-height:70px;}.cal-event{font-size:8px;}}
+</style>
+
+<div class="page-hdr"><h2>🗓 Calendar</h2><p>Deadlines and exams across all your courses</p></div>
+
+<div class="cal-head">
+  <div class="cal-title">{{ month_name }} {{ year }}</div>
+  <div class="cal-nav">
+    <a href="/calendar?y={{ prev_y }}&m={{ prev_m }}">← Prev</a>
+    <a href="/calendar">Today</a>
+    <a href="/calendar?y={{ next_y }}&m={{ next_m }}">Next →</a>
+  </div>
+</div>
+
+<div class="cal-grid">
+  {% for d in weekday_names %}<div class="cal-dow">{{ d }}</div>{% endfor %}
+  {% for week in weeks %}
+    {% for cell in week %}
+      {% if cell.day == 0 %}
+        <div class="cal-cell blank"></div>
+      {% else %}
+        <div class="cal-cell {% if cell.is_today %}today{% endif %}">
+          <div class="cal-daynum">{{ cell.day }}</div>
+          {% for ev in cell.events %}
+            <div class="cal-event {{ ev.kind }}" title="{{ ev.code }} — {{ ev.title }}">
+              <span class="ec">{{ ev.code }}</span> {{ ev.title }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
+</div>
+
+<div class="cal-legend">
+  <span><i style="background:var(--red);"></i>Exam</span>
+  <span><i style="background:var(--navy-mid);"></i>Assignment / other</span>
+</div>
+{% endblock %}
